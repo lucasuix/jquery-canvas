@@ -28,7 +28,7 @@ class Pencil extends Tool {
         super(size, color);
     }
 
-    iniciar() {
+    iniciar(ctx) {
         //Devido a natureza do ctx, quando ocorre uma mudança eu preciso
         //passar para o ctx qual foi essa mudança, isso aqui ocorre no momento d
         //mousedown
@@ -57,7 +57,7 @@ class Eraser extends Tool {
         this.brush_size = custom["brush_size"];
     }
 
-    iniciar() {
+    iniciar(ctx) {
         ctx.strokeStyle = this.brush_color;
         ctx.lineWidth = this.brush_size * 3;
     }
@@ -89,9 +89,12 @@ class Rectangle extends Tool {
             this.snapshot = custom["snapshot"];
         }
     
-        iniciar() {
+        iniciar(ctx) {
             ctx.strokeStyle = this.brush_color;
             ctx.lineWidth = this.brush_size;
+            
+            ctx.lineCap = 'butt'; //Faz as extremidades ficarem pontudas de novo
+            ctx.lineJoin = 'miter';
         }
         
         aplicar(ctx, e) {
@@ -99,4 +102,26 @@ class Rectangle extends Tool {
             ctx.putImageData(this.snapshot, 0, 0);
             ctx.strokeRect(e.offsetX, e.offsetY, this.prevX - e.offsetX, this.prevY - e.offsetY);
         }
+}
+
+
+class RectangleFill extends Rectangle {
+    
+    constructor(size = 1, color = "#000") {
+        super(size, color);
+    }
+    
+    iniciar(ctx) {
+        ctx.strokeStyle = this.brush_color;
+        ctx.fillStyle = this.brush_color;
+        ctx.lineWidth = this.brush_size;
+        
+        ctx.lineCap = 'butt'; //Faz as extremidades ficarem pontudas de novo
+        ctx.lineJoin = 'miter';
+    }
+    
+    aplicar (ctx, e) {
+        ctx.putImageData(this.snapshot, 0, 0);
+        ctx.fillRect(e.offsetX, e.offsetY, this.prevX - e.offsetX, this.prevY - e.offsetY);
+    }
 }

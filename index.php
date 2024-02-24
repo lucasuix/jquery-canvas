@@ -61,6 +61,7 @@
             "lapis": new Pencil(),
             "borracha": new Eraser(),
             "retangulo": new Rectangle(),
+            "retangulo_fill": new RectangleFill()
         };
 
         const custom = {
