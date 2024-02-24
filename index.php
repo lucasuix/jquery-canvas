@@ -29,6 +29,10 @@
         <button id="borracha"> Borracha </button>
         <button id="circulo"> Circulo </button>
         <button id="retangulo"> Retangulo </button>
+        <button id="retangulo_fill"> Retangulo Cheio </button>
+        <button id="elipse"> Elipse </button>
+        <button id="elipse_fill"> Elipse Cheia </button>
+        <button id="linha"> Linha </button>
         <button id="undo"> Desfazer </button>
         <button id="redo"> Refazer </button>
     </div>
@@ -59,9 +63,16 @@
             "retangulo": new Rectangle(),
         };
 
-        const customs = {
+        const custom = {
+            //Dados gerais
             "brush_size": 1,
-            "brush_color": "#000"
+            "brush_color": "#000",
+            
+            //Dados para ferramentas: Retângulo, Linha, Círculo
+            "prevX": 0,
+            "prevY": 0,
+            
+            "snapshot": ctx.getImageData(0, 0, canvas.width, canvas.height)
         };
 
         //Ferramenta atual
@@ -71,18 +82,23 @@
         $(ferramentas).on("click", function (e) { current_tool = e.target.id; });
 
         //Para trocar o tamanho da ferramenta
-        $(brushSize).on("input", function () { customs["brush_size"] = $(this).val(); });
+        $(brushSize).on("input", function () { custom["brush_size"] = $(this).val(); });
         
         //Para trocar a cor da ferramenta
-        $(brushColor).on("input", function () { customs["brush_color"] = $(this).val(); });
+        $(brushColor).on("input", function () { custom["brush_color"] = $(this).val(); });
 
 
         //Evento que escuta quando o mouse é pressionado para baixo no canvas
         $(canvas).on('mousedown', function(e) {
 
             
+            custom["snapshot"] = ctx.getImageData(0, 0, canvas.width, canvas.height); //Como vai ter o botão undo, eu vou precisar disso aqui
+            custom["prevX"] = e.offsetX; //Salva as coordenadas de inicio para uso da linha, retangulo, e elipse
+            custom["prevY"] = e.offsetY; //
             ctx.beginPath(); //Retoma o caminho do canvas, ou seja, onde o mouse está é onde começa
-            tools[current_tool].setup(customs["brush_size"], customs["brush_color"]);
+            
+            
+            tools[current_tool].setup(custom); //Passo o dicionário como referência para acessar qualquer chave que eu precisar dele, assim não preciso de algum if
             tools[current_tool].iniciar(ctx);
 
             // Então significa que é possível desenhar

@@ -6,9 +6,9 @@ class Tool {
         this.brush_color = color;
     }
 
-    setup(size, color) {
-        this.brush_size = size;
-        this.brush_color = color;
+    setup(custom) {
+        this.brush_size = custom["brush_size"];
+        this.brush_color = custom["brush_color"];
     }
 
     iniciar() {
@@ -53,8 +53,8 @@ class Eraser extends Tool {
     }
 
     //Polimorfismo para não redefinir a cor, e a borracha ter sempre a mesma cor
-    setup(size, color) {
-        this.brush_size = size;
+    setup(custom) {
+        this.brush_size = custom["brush_size"];
     }
 
     iniciar() {
@@ -76,6 +76,18 @@ class Rectangle extends Tool {
         constructor(size = 1, color = "#000") {
             super(size, color);
         }
+        
+        setup(custom) {
+            this.brush_size = custom["brush_size"];
+            this.brush_color = custom["brush_color"];
+            
+            //Para armazenar a posição do mouse, onde é o começo do quadrado
+            this.prevX = custom["prevX"];
+            this.prevY = custom["prevY"];
+            
+            //Para armazenar a imagem e impedir que o desenho fique com um retângulo borrando
+            this.snapshot = custom["snapshot"];
+        }
     
         iniciar() {
             ctx.strokeStyle = this.brush_color;
@@ -84,7 +96,7 @@ class Rectangle extends Tool {
         
         aplicar(ctx, e) {
         
-            ctx.strokeRect(e.offsetX, e.offsetY, 100, 100);
-            
+            ctx.putImageData(this.snapshot, 0, 0);
+            ctx.strokeRect(e.offsetX, e.offsetY, this.prevX - e.offsetX, this.prevY - e.offsetY);
         }
 }
