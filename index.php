@@ -27,7 +27,6 @@
     <div id="ferramentas">
         <button id="lapis"> Lapis </button>
         <button id="borracha"> Borracha </button>
-        <button id="circulo"> Circulo </button>
         <button id="retangulo"> Retangulo </button>
         <button id="retangulo_fill"> Retangulo Cheio </button>
         <button id="elipse"> Elipse </button>
@@ -61,7 +60,10 @@
             "lapis": new Pencil(),
             "borracha": new Eraser(),
             "retangulo": new Rectangle(),
-            "retangulo_fill": new RectangleFill()
+            "retangulo_fill": new RectangleFill(),
+            "elipse": new Ellipse(),
+            "elipse_fill": new EllipseFill(),
+            "linha": new Line()
         };
 
         const custom = {
