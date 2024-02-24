@@ -68,3 +68,23 @@ class Eraser extends Tool {
         ctx.stroke();
     }
 }
+
+
+
+class Rectangle extends Tool {
+ 
+        constructor(size = 1, color = "#000") {
+            super(size, color);
+        }
+    
+        iniciar() {
+            ctx.strokeStyle = this.brush_color;
+            ctx.lineWidth = this.brush_size;
+        }
+        
+        aplicar(ctx, e) {
+        
+            ctx.strokeRect(e.offsetX, e.offsetY, 100, 100);
+            
+        }
+}

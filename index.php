@@ -28,7 +28,9 @@
         <button id="lapis"> Lapis </button>
         <button id="borracha"> Borracha </button>
         <button id="circulo"> Circulo </button>
-        <button id="quadrado"> Quadrado </button>
+        <button id="retangulo"> Retangulo </button>
+        <button id="undo"> Desfazer </button>
+        <button id="redo"> Refazer </button>
     </div>
 
     <div id="custom">
@@ -41,7 +43,7 @@
         ctx = canvas.getContext("2d");
         ctx.imageSmoothingEnabled = true;
 
-        const tools = document.getElementById("ferramentas");
+        const ferramentas = document.getElementById("ferramentas");
         const brushSize = document.getElementById("brushSize");
 
         window.addEventListener("load", () => {
@@ -51,9 +53,10 @@
         });
 
         //ferramentas
-        const ferramentas = {
+        const tools = {
             "lapis": new Pencil(),
             "borracha": new Eraser(),
+            "retangulo": new Rectangle(),
         };
 
         const customs = {
@@ -62,24 +65,16 @@
         };
 
         //Ferramenta atual
-        var ferramenta = "lapis";
+        var current_tool = "lapis";
 
         //para trocar qual é a ferramenta atual
-        $(tools).on("click", function (e) {
-            ferramenta = e.target.id;
-        });
+        $(ferramentas).on("click", function (e) { current_tool = e.target.id; });
 
         //Para trocar o tamanho da ferramenta
-        $(brushSize).on("input", function () {
-            console.log(ferramentas[ferramenta].brush_size);
-            customs["brush_size"] = $(this).val();
-        });
+        $(brushSize).on("input", function () { customs["brush_size"] = $(this).val(); });
         
         //Para trocar a cor da ferramenta
-        $(brushColor).on("input", function () {
-            console.log(ferramentas[ferramenta].brush_color);
-            customs["brush_color"] = $(this).val();
-        });
+        $(brushColor).on("input", function () { customs["brush_color"] = $(this).val(); });
 
 
         //Evento que escuta quando o mouse é pressionado para baixo no canvas
@@ -87,12 +82,12 @@
 
             
             ctx.beginPath(); //Retoma o caminho do canvas, ou seja, onde o mouse está é onde começa
-            ferramentas[ferramenta].setup(customs["brush_size"], customs["brush_color"]);
-            ferramentas[ferramenta].iniciar(ctx);
+            tools[current_tool].setup(customs["brush_size"], customs["brush_color"]);
+            tools[current_tool].iniciar(ctx);
 
             // Então significa que é possível desenhar
             $(canvas).on('mousemove', function(e) {
-                ferramentas[ferramenta].aplicar(ctx, e);
+                tools[current_tool].aplicar(ctx, e);
             //Isso aqui vai ser diferente dependendo do objeto sabe, pode ser linha, fazer círculo e etc...
             });
         });
