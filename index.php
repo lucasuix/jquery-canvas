@@ -112,7 +112,7 @@
         });
 
         
-        $(canvas).on('mouseup mouseleave', function(e) { $(canvas).off('mousemove'); );
+        $(canvas).on('mouseup mouseleave', function(e) { $(canvas).off('mousemove'); });
 
 
 
