@@ -37,7 +37,7 @@ class Pencil extends Tool {
     aplicar(ctx, e) {
 
         ctx.lineTo(e.offsetX, e.offsetY);
-        console.log(e.offsetX, e.offsetY)
+        console.log(e.offsetX, e.offsetY);
         ctx.stroke();
     }
 }
@@ -126,11 +126,10 @@ class Ellipse extends slidingTools {
     
     iniciar(ctx) {
         ctx.strokeStyle = this.brush_color;
-        ctx.fillStyle = this.brush_color;
         ctx.lineWidth = this.brush_size;
         
-        ctx.lineCap = 'butt'; //Faz as extremidades ficarem pontudas de novo
-        ctx.lineJoin = 'miter';
+        //ctx.lineCap = 'butt'; //Faz as extremidades ficarem pontudas de novo
+        //ctx.lineJoin = 'miter';
     }
     
     aplicar(ctx, e) {
@@ -153,6 +152,15 @@ class Ellipse extends slidingTools {
 
 
 class EllipseFill extends Ellipse {
+    
+    iniciar(ctx) {
+        ctx.strokeStyle = this.brush_color;
+        ctx.fillStyle = this.brush_color;
+        ctx.lineWidth = 1;
+                                
+        //ctx.lineCap = 'butt'; //Faz as extremidades ficarem pontudas de novo
+        //ctx.lineJoin = 'miter';
+    }
     
     aplicar(ctx, e) {
         ctx.beginPath(); //Nesse caso tem que ter isso pq eu fecho o Path lá embaixo

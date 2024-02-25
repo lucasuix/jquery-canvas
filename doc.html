@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+
+<!-- 2024, Lucas Villani Justo -->
+
+<html>
+    <head>
+        <title> jQuery Canvas Documentation </title>
+        <meta charset="utf-8">
+    </head>
+    
+    <style>
+        .content {
+            display: flex;
+            flex-direction: column;
+            margin: auto;
+            
+            max-width: 1080px;
+            width: 100%;
+        }
+        
+        .section {
+            margin: 15px 10px;
+            width: 100%;
+        }
+        
+        a {
+           text-decoration: none; 
+        }
+    </style>
+    
+    <body>
+        
+        <div class="content">
+            <div class="section">
+                <h3> jQUERY CANVAS </h3>
+                <h5> Lucas Villani Justo - 2024 </h5>
+                
+                <p> O  jQuery Canvas utiliza a tecnologia canvas do HTML5 aliada ao jQuery
+                para realizar desenhos simples. O programa é orientado a objetos, na qual cada ferramenta é um objeto. </p>
+            </div>
+            
+            
+            <div class="section">
+                <ol>
+                    <li><a href="#princ_funcionamento">Príncipio de funcionamento procedural</a>
+                        <ol>
+                            <li><a href="#inic">Inicialização</a>
+                                <ol>
+                                    <li><a href="#canvas"> Canvas</a></li>
+                                    <li><a href="#ferramentas_html"> Seção de ferramentas no documento </a></li>
+                                    <li><a href="#load_canvas"> Carregando o Canvas </a></li>
+                                    <li><a href="#dic_ferramentas"> Dicionário de ponteiros para as ferramentas e ferramenta atual </a></li>
+                                    <li><a href="#custom"> Customização das características da ferramentas e dados relevantes </a></li>
+                                </ol>
+                            </li>
+                            
+                            <li><a href="#eventos_canvas">Eventos no canvas</a>
+                                <ol>
+                                    <li><a href="#inic_desenho">Evento do desenho (mousedown mousemove)</a></li>
+                                    <li><a href="#end_desenho">Final do desenho (mouseup mouseleave)</a></li>
+                                </ol>
+                            </li>
+                        </ol>
+                    </li>
+                    
+                    <li><a href="#classes_ferramentas"> Classes de Ferramentas </a>
+                        <ul>
+                            <li><a href="#tool"> Tool </a>
+                                <ul>
+                                    <li><a href="#pencil"> Lápis </a></li>
+                                    <li><a href="#eraser"> Borracha </a></li>
+                                    <li><a href="#slidingtools"> Sliding Tools </a>
+                                        <ul>
+                                            <li><a href="#rectangle"> Retângulo </a>
+                                                <ul>
+                                                    <li><a href="#rectangle_fill"> Retângulo Cheio </a></li>
+                                                </ul>
+                                            </li>
+                                            <li><a href="#ellipse"> Elipse </a>
+                                                <ul>
+                                                    <li><a href="#ellipse_fill"> Elipse Cheia </a></li>
+                                                </ul>
+                                            </li>
+                                            <li><a href="#line"> Linha </a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    
+                </ol>
+            </div>
+            
+            <div class="section" id="princ_funcionamento">
+                <h3> Princípio de funcionamento procedural </h3>
+                
+                <h4 id="inic"> Inicialização </h4>
+                <h5 id="canvas"> Canvas </h5>
+                <pre>
+                    <code>
+                        const canvas = document.querySelector("canvas");
+                        ctx = canvas.getContext("2d");
+                        ctx.imageSmoothingEnabled = true;
+                    </code>
+                </pre>
+                
+                <p> A inicialização do canvas e do contexto do desenho são as primeiras coisas realizadas no código JS.
+                ctx é o contexto a qual passaremos toda configuração e mudança que será aplicada ao canvas.
+                Uma delas é habilitar a imageSmoothing que irá reduzir serrilhados no desenho.</p>
+                
+                <h5 id="ferramentas_html"> Ferramentas no documento HTML </h5>
+                <pre>
+                    <code>
+                        const ferramentas = document.getElementById("ferramentas");
+                        const brushSize = document.getElementById("brushSize");
+                    </code>
+                </pre>
+                
+                <p> Após isso definimos as regiões na qual haverá o seletor de ferramentas para o usuário dentro do arquivo.</p>
+                
+                <p> A primeira constante, ferramentas é uma div que possui um série de botões que permite o usuário trocar a ferramenta atual. </p>
+                <p> A segunda se refere a um input do tipo range que é usado para manipular o tamanho do pincel, ou seja, a espessura das ferramentas .</p>
+                
+                
+                <h5 id="load_canvas"> Load e definição das dimensões do canvas </h5>
+                <pre>
+                    <code>
+                        window.addEventListener("load", () => {
+                            canvas.width = canvas.offsetWidth;
+                            canvas.height = canvas.offsetHeight;
+                        });
+                    </code>
+                </pre>
+                <p> Chamada imediatamente, carrega o tamanho do canvas para que as coordenadas estarem em relação a ele mesmo e seu próprio tamanho.</p>
+                
+                <h5 id="dic_ferramentas"> Dicionário de ferramentas e ferramenta atual </h5>
+                <pre>
+                    <code>
+                        const tools = {
+                            "lapis": new Pencil(),
+                            "borracha": new Eraser(),
+                            "retangulo": new Rectangle(),
+                            "retangulo_fill": new RectangleFill(),
+                            "elipse": new Ellipse(),
+                            "elipse_fill": new EllipseFill(),
+                            "linha": new Line()
+                        };
+                        
+                        var current_tool = "lapis";
+                    </code>
+                </pre>
+                <p> Aqui inicializamos todas as ferramentas que serão utilizadas pelo canvas, em seguida a variável current_tool que será usada como
+                a chave para sabermos qual ferramenta o usuário deseja usar.
+                Um pouco mais a frente na explicação de como as classes de ferramentas funcionam, será mostrado que todas elas possuem métodos em comum
+                que são chamados sequecialmente sem exceção. A combinação dessas duas entidades (tool e current_tool) permite que o código fique menor.
+                Pois basta sabermos para qual ferramenta estamos apontando, pois os métodos serão os mesmos. Por exemplo:</p>
+                <pre>
+                    <code>
+                        tools[current_tool].aplicar(ctx, e);
+                        
+                        //A explicação do "ctx" e do "e" será fornecida mais a frente.
+                    </code>
+                </pre>
+                <p> Para o lápis o comportamento no canvas será desenhar, para a borracha será apagar, para a linha será desenhar uma linha.</p>
+                <p> Portanto podemos trabalhar somente nas classes e deixar o código procedural do documento intacto. </p>
+                
+                <h5 id="custom"> Customização e dados importantes para o canvas </h5>
+                <pre>
+                    <code>
+                        const custom = {
+                            //Dados gerais
+                            "brush_size": 1,
+                            "brush_color": "#000",
+                            
+                            //Dados para ferramentas: Retângulo, Linha, ELipse
+                            "prevX": 0,
+                            "prevY": 0,
+                            
+                            "snapshot": ctx.getImageData(0, 0, canvas.width, canvas.height)
+                        };
+                    </code>
+                </pre>
+                
+                <p> O usuário tem a possibilidade de alterar o tamanho do pincel e sua cor. Esses dados são armazenados no dicionário custom.
+                O dicionário então será utilizado pelas ferramentas no método setup que define para cada ferramenta sua cor, tamanho e outros dados do dicionaŕio se necessário.
+                Também funciona como armazenamento do valor da cor atual e do tamanho do pincel atual.</p>
+                
+                <p> Já as chaves prevX, prevY e snapshot serão utilizadas para as ferramentas que deslizam, como retângulo, elipse, linha.
+                O prevX e o prevY armazenam a posição inicial, ou seja, o início de onde será desenhado aquela forma. A snapshot serve para armazenar a imagem do desenho
+                no instante antes das ferramentas a pouco citadas. Ela é chamada continuamente para gerar a ilusão que a forma desenhada está deslizando seguindo o mouse pelo canvas,
+                até que o botão seja solto e a forma enfim desenhada de fato.</p>
+                
+                <pre>
+                    <code>
+                        //Para trocar a ferramenta
+                        $(ferramentas).on("click", function (e) { current_tool = e.target.id; });
+
+                        //Para trocar o tamanho da ferramenta
+                        $(brushSize).on("input", function () { custom["brush_size"] = $(this).val(); });
+                        
+                        //Para trocar a cor da ferramenta
+                        $(brushColor).on("input", function () { custom["brush_color"] = $(this).val(); });
+                    </code>
+                </pre>
+                
+                <p> Após a definição de todos essas constantes e variáveis adicionamos os eventos que irão escutar as interações do usuário com as seções citadas no ínicio (ferramentas, brushSize, brushColor).
+                Quando o usuário interagir com esses elementos o novo valor definido pelo usuário será salvo no dicionário custom para ser utilizado pelos objetos (ferramentas de desenho). </p>
+                
+                <h4 id="eventos_canvas"> Eventos no canvas </h4>
+                <h5 id="inic_desenho"> Desenho (mousedown) </h5>
+                <p> Primeiramente é redefinido o conteúdo das chaves snapshot, prevX, e prevYm pois elas só são relevantes serem modificadas na iminência da aplicação da ferramenta.
+                Justamente porque marcam o ponto inicial onde o usuário começou a desenhar, como tira um retrato do desenho antes da aplicação da ferramenta,
+                para que seja aplicado o desfazer e refazer, ou para criar a ilusaõ de deslize no caso das ferramentas, retângulo, elipse e linha.
+                Em seguida chamamos o método beginPath() do ctx para dizermos que a aplicação da ferramenta deve iniciar onde o usuário deu o clique, e não a partir de onde ele terminou a aplciação da ferramenta anterior. </p>
+                <pre>
+                    <code>
+                        $(canvas).on('mousedown', function(e) {
+
+            
+                            custom["snapshot"] = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                            custom["prevX"] = e.offsetX; 
+                            custom["prevY"] = e.offsetY; 
+                            ctx.beginPath(); 
+                    </code>
+                </pre>
+                <p> Quando o usuário realizar um clique com o botão esquerdo no canvas a ferramenta atual selecionada deve ser inicializada, ou seja, os parãmetros necessaŕios do dicionário custom serão aproveitados 
+                por aquela ferramenta, como o tamanho do lápis, a cor, e etc...</p>
+                <p> Este processo ocorre no método setup, e recebe o dicionário custom como parâmetro. </p>
+                <p> Seguidamente chamamos o método iniciar. Esse método aplica as mudanças de cor, tamanho do lápis, tipo de borda de linha e etc... Ao canvas, ou seja, a partir desse momento, o canvas será
+                desenhado utilizando as configurações específicas daquela ferramenta. </p>
+                <pre>
+                    <code>
+                        tools[current_tool].setup(custom);
+                        tools[current_tool].iniciar(ctx);
+                    </code>
+                </pre>
+                
+                <p> Então, o desenho, ou seja, a aplicação será executada no canvas todas vez que o mouse (ainda pressionado) se mover pelo mesmo (LEMBRANDO QUE ESSE EVENTO ESTÁ DENTRO DO ESCOPO DO $(canvas).on('mousedown'...):</p>
+                <pre>
+                    <code>
+                        $(canvas).on('mousemove', function(e) {
+                            tools[current_tool].aplicar(ctx, e);
+                        });
+                    });
+                    </code>
+                </pre>
+                <p> O ctx é passado para que o canvas receba as mudanças, e "e" do evento é usado para recuperar as coordenadas do mouse. </p>
+                
+                <h5 id="end_desenho"> Final do movimento (mouseup) </h5>
+                <p> Finalmente, quando o usuário deixar de pressionar o botão esquerdo, o movimento do desenho terá sido concluído, e o evento $(canvas).on('mousemove')... deve ser desativado. </p>
+                <pre>
+                    <code>
+                        $(canvas).on('mouseup mouseleave', function(e) {
+                            $(canvas).off('mousemove');
+                        });
+                    </code>
+                </pre>
+                <p> Toda vez que o mouse for pressionado no canvas, o evento de aplicar a ferramenta será acionado novamente, e assim é mantido o controle do usuário para desenhar somente quando o mouse
+                estiver pressionado em cima do canvas.</p>
+                <p> Também é ocorre se o mouse deixar o canvas, devido ao
+                 'mouseleave'.</p>
+            </div>
+            
+            
+            <div class="section" id="classes_ferramentas">
+                <h3> Classes de Ferramentas </h3>
+                
+                <p> As classes de ferramentas são escritas em um documento separado, tool.js, que é importado no ínicio do carregamento da página. Para evitar repetições, qualquer descrição ausente no método de uma classe,
+                 estará presente na classe anterior ou na superclasse.</p>
+                
+                <ul>
+                    <li><a href="#tool"> Tool </a>
+                        <ul>
+                            <li><a href="#pencil"> Lápis </a></li>
+                            <li><a href="#eraser"> Borracha </a></li>
+                            <li><a href="#slidingtools"> Sliding Tools </a>
+                                <ul>
+                                    <li><a href="#rectangle"> Retângulo </a>
+                                        <ul>
+                                            <li><a href="#rectangle_fill"> Retângulo Cheio </a></li>
+                                        </ul>
+                                    </li>
+                                    <li><a href="#ellipse"> Elipse </a>
+                                        <ul>
+                                            <li><a href="#ellipse_fill"> Elipse Cheia </a></li>
+                                        </ul>
+                                    </li>
+                                    <li><a href="#line"> Linha </a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <h4 id="tool"> Tool </h4>
+                <pre>
+                    <code>
+                        class Tool {
+
+                            constructor(size = 1, color = "#000") {
+                                this.brush_size = size;
+                                this.brush_color = color;
+                            }
+
+                            setup(custom) {
+                                this.brush_size = custom["brush_size"];
+                                this.brush_color = custom["brush_color"];
+                            }
+
+                            iniciar() {
+                                throw new Error("Método 'iniciar' deve ser aplicado em subclasses");
+                            }
+
+                            aplicar() {
+                                throw new Error("Método 'aplicar' deve ser aplicado em subclasses");
+                            }
+
+                        }
+                    </code>
+                </pre>
+                
+                <p> A classe Tool é uma classe abstrata que funciona como base para as demais classes. Toda subclasse derivada desta terá os 4 seguintes métodos, que farão:</p>
+                
+                <ul>
+                    <li> constructor: Responsável por iniciar cada ferramenta, por padrão cada ferramenta inicia com tamanho 1 e cor "#000", isto é, preto. Isso garante que todas as ferramentas estarão
+                    prontas para uso, e usarão a mesa configuração.</li>
+                    <li> setup(custom): Se ocorrer uma mudança na configuração inicial, o setup garante que a ferramenta receberá aquelas mudanças. O funcionamento e razão para o custom pode ser vista <a href="#custom">aqui</a>.</li>
+                    <li> iniciar: O método iniciar aplica as mudanças no ctx, enquanto o setup aplica as mudanças no próprio objeto. Este método é o que configura o ctx para quando o usuário fazer uso da ferramenta.</li>
+                    <li> aplicar: Responsável por aplicar o desenho no canvas, é a nesse método que o usuário enxerga os efeitos do uso da ferramenta no canvas, durante o <a href="#inic_desenho">mousedown junto ao mousemove</a>.</li>
+                </ul>
+                
+                
+                <h4 id="pencil"> Lápis </h4>
+                <pre>
+                    <code>
+                        class Pencil extends Tool {
+
+                            iniciar(ctx) {
+                                ctx.strokeStyle = this.brush_color;
+                                ctx.lineWidth = this.brush_size;
+                                ctx.lineCap = 'round'; //Faz a linha ficar redonda
+                                ctx.lineJoin = 'round'; //Remove os spikes
+                            }
+
+                            aplicar(ctx, e) {
+
+                                ctx.lineTo(e.offsetX, e.offsetY);
+                                ctx.stroke();
+                            }
+                        }
+                    </code>
+                </pre>
+                
+                <p> O lápis é a ferramenta mais simples, funciona com chamadas sucessivas do método lineTo do ctx. Criando a ilusão de um lápis sendo utilizado na tela. A seguir uma explicação dos métodos.
+                Obs: O método construtor e setup são omitidos pois são herdados dos super classe Tool. Os demais métodos tem polimorfismo.</p>
+                <p> Perceba que os valores do this.brush_color e this.brush_size já foram chamados no método setup herdado da superclasse.</p>
+                
+                <ul>
+                    <li>iniciar(ctx):
+                        <ul>
+                            <li>ctx.strokeStyle -> define a cor do que será desenhado a partir daquele momento no canvas.</li>
+                            <li>ctx.lineWidth -> define o tamanho do pincel.</li>
+                            <li>ctx.lineCap = 'round'; -> Deixa as duas extremidades da linha sempre redondas.</li>
+                            <li>ctx.lineCap = 'round'; -> Deixa as conexão entre as linhas sempre redondas. Sem isso, a linha teria vários espinhos em posições aleatórias durante a aplicação e movimento da ferramenta.</li>
+                        </ul>
+                    </li>
+                    <br>
+                    <li>aplicar(ctx, e): //Método que será chamado continuamente enquanto o mouse é pressionado e movimentado
+                        <ul>
+                            <li>ctx.lineTo(e.offsetX, e.offsetY); -> Define o caminho da linha, o e de "event" é passado para que seja possível recuperar a posição do lápis dentro do canvas</li>
+                            <li>ctx.stroke(); -> Desenha a linha de fato </li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <h4 id="eraser"> Borracha </h4>
+                
+                <pre>
+                    <code>
+                        class Eraser extends Tool {
+
+                            constructor(size = 1, color = "#fff") {
+                                super(size, color);
+                            }
+
+
+                            setup(custom) {
+                                this.brush_size = custom["brush_size"];
+                            }
+
+                            iniciar(ctx) {
+                                ctx.strokeStyle = this.brush_color;
+                                ctx.lineWidth = this.brush_size * 3;
+                                ctx.lineCap = 'round'; //Faz a linha ficar redonda
+                                ctx.lineJoin = 'round'; //Remove os spikes
+                            }
+
+                            aplicar(ctx, e) {
+
+                                ctx.lineTo(e.offsetX, e.offsetY);
+                                ctx.stroke();
+                            }
+                        }
+                    </code>
+                </pre>
+                
+                <p> A borracha se comporta como o lápis, entretanto tem diferenças importantes. </p>
+                
+                <ul>
+                    <li>constructor: Aqui a cor padrão é branca invés de preta.</li>
+                    <br>
+                    <li>setup: O setup só redefine o tamanho da borracha, a cor permanece a mesma declarada no construtor (branca).</li>
+                    <br>
+                    <li>iniciar(ctx):
+                        <ul>
+                            <li>ctx.strokeStyle = this.brush_color; -> A cor que se refere a borracha sempre aponta para a cor branca (dito anteriormente no setup).</li>
+                            <li>ctx.lineWidth = this.brush_size * 3; -> A variação do tamanho da borracha é maior por padrão.</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <h4 id="slidingtools"> Sliding Tools </h4>
+                
+                <pre>
+                    <code>
+                        class slidingTools extends Tool {
+    
+                            setup(custom) {
+                                    this.brush_size = custom["brush_size"];
+                                    this.brush_color = custom["brush_color"];
+                                    
+                                    //Para armazenar a posição do mouse, onde é o começo do quadrado
+                                    this.prevX = custom["prevX"];
+                                    this.prevY = custom["prevY"];
+                                    
+                                    //Para armazenar a imagem e impedir que o desenho fique com um retângulo borrando
+                                    this.snapshot = custom["snapshot"];
+                                }
+                            
+                        }
+                    </code>
+                </pre>
+                
+                <p> As ferramentas Retângulo, Elipse e Linha tem uma necessidade especial. Enquanto o usuário desliza e não solta o botão esquerdo do mouse,
+                deve ser possível enxergar a forma da ferramenta deslizando pelo canvas, mas, somente ser desenhada de fato quando o usuário soltar o botão esquerdo do mouse. A classe abstrata
+                slidingTools funciona para propagar os dados necessários para essa característica em comum nas subclasses geradas a partir dela.</p>
+                
+                <ul>
+                    <li>setup(custom):
+                        <ul>
+                            <li>this.prevX = custom["prevX"]; this.prevY = custom["prevY"]; -> Armazena a posição inicial do mouse, será nosso ponto de referência quando realizarmos o desenho da forma </li>
+                            <li>this.snapshot = custom["snapshot"]; -> Armazena uma imagem do canvas no momento do clique down do mouse, antes do movimento e aplicaçaõ da ferramenta. A imagem será
+                            reescrita no canvas continuamente dando a impressão que a forma está deslizando pelo canvas. Evitará que o desenhe fique borrado da forma deslizando. </li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                
+                <h4 id="rectangle"> Retângulo </h4>
+                
+                <pre>
+                    <code>
+                        class Rectangle extends slidingTools {
+    
+                                iniciar(ctx) {
+                                    ctx.strokeStyle = this.brush_color;
+                                    ctx.lineWidth = this.brush_size;
+                                    
+                                    ctx.lineCap = 'butt'; //Faz as extremidades ficarem pontudas de novo
+                                    ctx.lineJoin = 'miter';
+                                }
+                                
+                                aplicar(ctx, e) {
+                                    
+                                    ctx.putImageData(this.snapshot, 0, 0);
+                                    ctx.strokeRect(e.offsetX, e.offsetY, this.prevX - e.offsetX, this.prevY - e.offsetY);
+                                }
+                        }
+                    </code>
+                </pre>
+                
+                <p> O retângulo é a forma mais direta. Com poucas diferenças em relação as demais.</p>
+                
+                <ul>
+                    <li>iniciar(ctx):
+                        <ul>
+                            <li>ctx.lineCap = 'butt'; e ctx.lineJoin = 'miter'; -> Faz a extremidade das linhas ficarem pontudas novamente.</li>
+                        </ul>
+                    </li>
+                    <br>
+                    <li>aplicar(ctx, e):
+                        <ul>
+                            <li>ctx.putImageData(this.snapshot, 0, 0); -> Escreve a imagem salva do canvas no momento do clique, para criar a ilusão de desenho.</li>
+                            <li>ctx.strokeRect(e.offsetX, e.offsetY, this.prevX - e.offsetX, this.prevY - e.offsetY); -> As duas primeiras coordenadas seguem o ponteiro do mouse (x,y) enquanto as últimas duas definem a largura e a altura, respectivamente.</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                
+                <h4 id="rectangle_fill"> Retângulo cheio </h4>
+                
+                <pre>
+                    <code>
+                        class RectangleFill extends Rectangle {
+    
+                            iniciar(ctx) {
+                                ctx.strokeStyle = this.brush_color;
+                                ctx.fillStyle = this.brush_color;
+                                ctx.lineWidth = this.brush_size;
+                                
+                                ctx.lineCap = 'butt';
+                                ctx.lineJoin = 'miter';
+                            }
+                            
+                            aplicar (ctx, e) {
+                                ctx.putImageData(this.snapshot, 0, 0);
+                                ctx.fillRect(e.offsetX, e.offsetY, this.prevX - e.offsetX, this.prevY - e.offsetY);
+                            }
+                        }
+                    </code>
+                </pre>
+                
+                <ul>
+                    <li>iniciar(ctx):
+                        <ul>
+                            <li>ctx.fillStyle = this.brush_color; -> Agora definimos também a cor do fill</li>
+                        </ul>
+                    </li>
+                    <br>
+                    <li>aplicar(ctx, e):
+                        <ul>
+                            <li>ctx.fillRect(e.offsetX, e.offsetY, this.prevX - e.offsetX, this.prevY - e.offsetY); -> Utilizamos o método fillRect invés do método stroke.</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                
+                <h4 id="ellipse"> Elipse </h4>
+                
+                <pre>
+                    <code>
+                        class Ellipse extends slidingTools {
+    
+                            iniciar(ctx) {
+                                ctx.strokeStyle = this.brush_color;
+                                ctx.lineWidth = this.brush_size;
+                                
+                            }
+                            
+                            aplicar(ctx, e) {
+                                ctx.beginPath();
+                                ctx.putImageData(this.snapshot, 0, 0);
+                                
+                                let radiusx = Math.abs(parseInt((e.offsetX - this.prevX)/2));
+                                let radiusy = Math.abs(parseInt((e.offsetY - this.prevY)/2));
+                                let x = parseInt((e.offsetX - this.prevX)/2) + this.prevX;
+                                let y = parseInt((e.offsetY - this.prevY)/2) + this.prevY;
+                                
+                                
+                                ctx.ellipse(x, y, radiusx, radiusy, 0, 0, Math.PI * 2);
+                                ctx.closePath();
+                                ctx.stroke();
+                            }
+                            
+                        }
+                    </code>
+                </pre>
+                
+                <p> A elipse possui certas pelicularidades em relação ao retângulo, principalmente no que diz respeito ao closePath e beginPath, e a ausência das linhas que definem a curvatura das bordas,
+                pois como trata-se de um arco não haverá linhas pontudas e arestas naturalmente.  </p>
+                <p> Para termos certeza que a elipse foi fechada precisamos utilizar o método closePath no final, entretanto, ao chamar esse método se o método beginPath
+                não for chamado novamente não ocorerá um novo stroke no canvas, pois o caminho foi encerrado, e o ctx não sabe onde começar. Por isso é chamado o beginPath nesse caso.</p>
+                
+                <ul>
+                    <li>aplicar(ctx, e):
+                        <ul>
+                            <li>ctx.beginPath(); -> Garante que quando o Path for encerrado lá embaixo, qualquer nova alteração será aplicada.</li>
+                            <li> let radiusx = Math.abs(parseInt((e.offsetX - this.prevX)/2)); -> Calcula o tamanho do RAIO horizontal, por esse razão é a posição atual do mouse - a poisção inicial divido por 2.
+                            Como trata-se de uma distância o valor é absoluto. </li>
+                            <li> let radiusy = Math.abs(parseInt((e.offsetY - this.prevY)/2)); -> O mesmo acima se aplica. </li>
+                            <br>
+                            <li>let x = parseInt((e.offsetX - this.prevX)/2) + this.prevX; -> Se refere a posição atual do mouse no canto mais extremo em relação onde a elipse foi desenhada. Consiste no raio somado com a
+                            posição inicial, garantindo que a elipse esteja contida em um "retângulo" com a diagonal referente ao ponto inicial do mouse, e sua posição atual. </li>
+                            <li>let y = parseInt((e.offsetY - this.prevY)/2) + this.prevY; -> O mesmo acima se aplica. </li>
+                            
+                            <br>
+                            <li>ctx.ellipse(x, y, radiusx, radiusy, 0, 0, Math.PI * 2); -> Define a elipse que será desenhada, os ângulos inicial e final permanecem zero, do contrário a elipse terá um comportamento de deslize
+                            diagonal e não desejado. O Math.PI * 2 é o comprimento do arco, e possui esse valor pois desejamos uma volta completa. </li>
+                            
+                            <br>
+                            <li>ctx.closePath(); -> A linha mais importante neste código em par com a linha ctx.beginPath();, evita que várias cópias sucessivas da elipse sejam desenhadas, e não tenha-se a ilusão
+                            de deslize.</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                
+                <h4 id="ellipse_fill">Elipse Cheia</h4>
+                
+                <pre>
+                    <code>
+                        class EllipseFill extends Ellipse {
+    
+                            iniciar(ctx) {
+                                ctx.strokeStyle = this.brush_color;
+                                ctx.fillStyle = this.brush_color;
+                                ctx.lineWidth = 1;
+                                                        
+                            }
+                            
+                            aplicar(ctx, e) {
+                                ctx.beginPath();
+                                ctx.putImageData(this.snapshot, 0, 0);
+                                
+                                let radiusx = Math.abs(parseInt((e.offsetX - this.prevX)/2));
+                                let radiusy = Math.abs(parseInt((e.offsetY - this.prevY)/2));
+                                let x = parseInt((e.offsetX - this.prevX)/2) + this.prevX;
+                                let y = parseInt((e.offsetY - this.prevY)/2) + this.prevY;
+                                
+                                
+                                ctx.ellipse(x, y, radiusx, radiusy, 0, 0, Math.PI * 2);
+                                ctx.closePath();
+                                ctx.fill();
+                                ctx.stroke();
+                            }
+                            
+                        }
+                    </code>
+                </pre>
+                
+                <p> Poucos detalhes diferenciam a Elipse Cheia da Elipse vazada, mas são detalhes importantes.</p>
+                
+                <ul>
+                    <li>iniciar(ctx):
+                        <ul>
+                            <li>ctx.fillStyle = this.brush_color; -> Como vamos aplicar um fill, devemos chamar este método. Terá a mesma cor que as bordas (strokeStyle).</li>
+                            <li>ctx.lineWidth = 1; -> O tamanho do pincel aqui é 1 independente do tamanho escolhido pelo usuário. Caso contraŕio, a elipse cheia ficaria com bordas muito grandes,
+                            e ao tentar desenhar uma elipse bem fina, por exemplo, isso não seria possível. Essa linha existe simplesmente em razão da intuição do usuário.
+                            O comportamento visto em um retângulo cheio, seja o mesmo visto em uma elipse cheia.</li>
+                        </ul>
+                    </li>
+                    <br>
+                    <li>aplicar(ctx, e):
+                        <ul>
+                            <li>ctx.fill(); -> Aplica a elipse com preenchimento. </li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                
+                <h4 id="line">Linha</h4>
+                
+                <pre>
+                    <code>
+                        class Line extends slidingTools {
+    
+    
+                            iniciar(ctx) {
+                                ctx.strokeStyle = this.brush_color;
+                                ctx.lineWidth = this.brush_size;
+                                ctx.lineCap = 'round';
+                                ctx.lineJoin = 'round';
+                            }
+                            
+                            
+                            aplicar(ctx, e) {
+                                ctx.beginPath();
+                                ctx.putImageData(this.snapshot, 0, 0);
+
+                                ctx.moveTo(this.prevX, this.prevY); //Ponto de origem é fixo
+                                ctx.lineTo(e.offsetX, e.offsetY);
+                                ctx.stroke();
+                            }
+                            
+                            
+                        }
+                    </code>
+                </pre>
+                
+                <p> No caso da linha, retornamos com a convenção de linhas com pontas arredondadas. Queremos também a ilusão de algo deslizando pelo canvas. </p>
+                
+                <ul>
+                    <li>aplicar(ctx, e):
+                        <ul>
+                            <li>ctx.beginPath(); -> No caso também é necessaŕio o uso do beginPath para evitar a criação de diversas cópias da linha enquanto ela se move pelo canvas. E o ponto de origem da linha será fixo.</li>
+                            <li>ctx.moveTo(this.prevX, this.prevY); -> A cada chamada do método e ínicio do Path, retornamos a origem da linha para o ponto inicial, no primeiro clique do canvas usando a ferramenta linha.</li>
+                            <li>ctx.lineTo(e.offsetX, e.offsetY); -> Outra extremidade da linha, que corresponde a posição atual do mouse no canvas.</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+            </div>
+            
+
+        </div>
+    </body>
+</html>
