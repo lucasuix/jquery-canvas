@@ -94,30 +94,25 @@
         //Evento que escuta quando o mouse é pressionado para baixo no canvas
         $(canvas).on('mousedown', function(e) {
 
+            //Snapshot para criar efeito de deslize se necessário
+            custom["snapshot"] = ctx.getImageData(0, 0, canvas.width, canvas.height);
             
-            custom["snapshot"] = ctx.getImageData(0, 0, canvas.width, canvas.height); //Como vai ter o botão undo, eu vou precisar disso aqui
-            custom["prevX"] = e.offsetX; //Salva as coordenadas de inicio para uso da linha, retangulo, e elipse
-            custom["prevY"] = e.offsetY; //
-            ctx.beginPath(); //Retoma o caminho do canvas, ou seja, onde o mouse está é onde começa
+            //Ponto inicial
+            custom["prevX"] = e.offsetX;
+            custom["prevY"] = e.offsetY;
+            
+            ctx.beginPath(); //Posição inicial do mouse é o ínicio do trajeto
             
             
-            tools[current_tool].setup(custom); //Passo o dicionário como referência para acessar qualquer chave que eu precisar dele, assim não preciso de algum if
-            tools[current_tool].iniciar(ctx);
+            tools[current_tool].setup(custom); //Preferências passadas pela ferramenta
+            tools[current_tool].iniciar(ctx); //Preferências e funcionamento da ferramenta passado para o canvas 
 
-            // Então significa que é possível desenhar
-            $(canvas).on('mousemove', function(e) {
-                tools[current_tool].aplicar(ctx, e);
-            //Isso aqui vai ser diferente dependendo do objeto sabe, pode ser linha, fazer círculo e etc...
-            });
+            // Aplica a ferramenta no canvas
+            $(canvas).on('mousemove', function(e) { tools[current_tool].aplicar(ctx, e); });
         });
 
-        // Quando o usuário leva o mouse para cima, ou seja, solta, os eventos de mouse que precisam
-        // do mousemove são desativados e o canvas para de desenhar
-        // mas quando ele apertar novamente acionará ali no mousedown
-        // o mouse leave também remove o efeito de desenho se o usuário colocar o mouse fora dos limites do canvas
-        $(canvas).on('mouseup mouseleave', function(e) {
-            $(canvas).off('mousemove');
-        });
+        
+        $(canvas).on('mouseup mouseleave', function(e) { $(canvas).off('mousemove'); );
 
 
 
