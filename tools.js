@@ -24,7 +24,7 @@ class Tool {
 
 class Pencil extends Tool {
 
-    iniciar(ctx) {
+    iniciar(ctx, e) {
         //Devido a natureza do ctx, quando ocorre uma mudança eu preciso
         //passar para o ctx qual foi essa mudança, isso aqui ocorre no momento d
         //mousedown
@@ -32,10 +32,15 @@ class Pencil extends Tool {
         ctx.lineWidth = this.brush_size;
         ctx.lineCap = 'round'; //Faz a linha ficar redonda
         ctx.lineJoin = 'round'; //Remove os spikes
+        
+        //Permite cliques únicos (pontos)
+        ctx.moveTo(e.offsetX, e.offsetY);
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.stroke();
     }
 
     aplicar(ctx, e) {
-
+        
         ctx.lineTo(e.offsetX, e.offsetY);
         console.log(e.offsetX, e.offsetY);
         ctx.stroke();
@@ -53,11 +58,15 @@ class Eraser extends Tool {
         this.brush_size = custom["brush_size"];
     }
 
-    iniciar(ctx) {
+    iniciar(ctx, e) {
         ctx.strokeStyle = this.brush_color;
         ctx.lineWidth = this.brush_size * 3;
         ctx.lineCap = 'round'; //Faz a linha ficar redonda
         ctx.lineJoin = 'round'; //Remove os spikes
+        
+        ctx.moveTo(e.offsetX, e.offsetY);
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.stroke();
     }
 
     aplicar(ctx, e) {
