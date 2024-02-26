@@ -216,3 +216,84 @@ class Line extends slidingTools {
     
     
 }
+
+
+
+class Bucket extends Tool {
+    
+    setup(custom) {
+        this.brush_size = 1; // O tamanho da ferramenta é sempre um pixel independente do que aconteça
+        this.brush_color = custom["brush_color"];
+        
+        this.canvas_size = custom["canvas_size"];
+    }
+    
+    
+    rgbToHex(pixel) {
+        
+        return "#" + ((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2]).toString(16).slice(1);
+    }
+    
+    hexToRgb(hex) {
+        // Remover "#" se presente
+        hex = hex.replace(/^#/, '');
+
+        // Converter para valores de cor RGB
+        var bigint = parseInt(hex, 16);
+        var r = (bigint >> 16) & 255;
+        var g = (bigint >> 8) & 255;
+        var b = bigint & 255;
+
+        // Retornar valores de cor RGB
+        return { r: r, g: g, b: b };
+    }
+    
+    
+    
+    floodFill(x, y, target_color, selected_color, ctx, new_pixel) {
+        
+        
+        if (this.rgbToHex(ctx.getImageData(x, y, 1, 1).data) == selected_color ||
+            x <= 0 || y <= 0 ||
+            x > this.canvas_size["width"] || y > this.canvas_size["height"]) { return; }
+        
+        if (this.rgbToHex(ctx.getImageData(x, y, 1, 1).data) != target_color) { return; }
+        
+        //Trocando o pixel
+        ctx.putImageData(new_pixel, x, y);
+        
+        this.floodFill(x + 1, y, target_color, selected_color, ctx, new_pixel);
+        this.floodFill(x - 1, y, target_color, selected_color, ctx, new_pixel);
+        this.floodFill(x, y + 1, target_color, selected_color, ctx, new_pixel);
+        this.floodFill(x, y - 1, target_color, selected_color, ctx, new_pixel);
+        
+        return;
+    }
+  
+        
+    // Aqui de fato é onde a mágica acontece, a aplicação da ferramenta em um clique único
+    iniciar(ctx, e) {
+        
+        let pixel = ctx.getImageData(e.offsetX, e.offsetY, 1, 1).data; //Cor atual onde foi selecionado e que será comparado
+        let new_color = this.hexToRgb(this.brush_color); //Cor selecionada mas em formato RGB
+        let aim_color = this.rgbToHex(pixel); //Cor alvo em formato hexadecimal para comparar com a cor da classe que também é uma string hexadecimal
+        
+        //Pixel com a cor nova para subsituir os pixels antigos
+        let pixelData = ctx.createImageData(1, 1);
+        
+        pixelData.data[0] = new_color.r; // Vermelho
+        pixelData.data[1] = new_color.g; // Verde
+        pixelData.data[2] = new_color.b; // Azul
+        pixelData.data[3] = 255; // Opacidade (alfa)
+        
+        
+        this.floodFill(e.offsetX, e.offsetY, aim_color, this.brush_color, ctx, pixelData);
+        
+        //Cor desejada nós já sabemos, é this.brush_color, mas está no formato #xxxxxx
+        //data vem em um array: pixel_color[0] -> R; pixel_color[1] -> G; pixel_color[2] -> B, pixel_color[4] -> nível de transparência
+        
+    }
+    
+    aplicar(ctx, e) { return; } //Como o bucket não é uma ferramenta de aplicação constante, tentar aplicar com ele deslizando simplesmente retorna imediatamente todas as chamadas da função.
+    
+}

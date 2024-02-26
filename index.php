@@ -20,7 +20,7 @@
 </head>
 <body>
 
-    <canvas id="canvas" width="1080px" height="720px">
+    <canvas id="canvas" width="400px" height="400px">
     </canvas>
 
     <!-- Opções de formas -->
@@ -32,8 +32,10 @@
         <button id="elipse"> Elipse </button>
         <button id="elipse_fill"> Elipse Cheia </button>
         <button id="linha"> Linha </button>
+        <button id="balde"> Balde </button>
         <button id="undo"> Desfazer </button>
         <button id="redo"> Refazer </button>
+        <button id="limpar"> Limpar Desenho </button>
     </div>
 
     <div id="custom">
@@ -45,6 +47,9 @@
         const canvas = document.querySelector("canvas");
         ctx = canvas.getContext("2d");
         ctx.imageSmoothingEnabled = true;
+        
+        ctx.fillStyle = "#FFFFFF"; // Define a cor como branco
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
         const ferramentas = document.getElementById("ferramentas");
         const brushSize = document.getElementById("brushSize");
@@ -63,7 +68,8 @@
             "retangulo_fill": new RectangleFill(),
             "elipse": new Ellipse(),
             "elipse_fill": new EllipseFill(),
-            "linha": new Line()
+            "linha": new Line(),
+            "balde": new Bucket
         };
 
         const custom = {
@@ -75,7 +81,14 @@
             "prevX": 0,
             "prevY": 0,
             
-            "snapshot": ctx.getImageData(0, 0, canvas.width, canvas.height)
+            "snapshot": ctx.getImageData(0, 0, canvas.width, canvas.height),
+            
+            "canvas_size": {
+                
+                "width": ctx.canvas.width,
+                "height": ctx.canvas.height
+                
+            }
         };
 
         //Ferramenta atual
