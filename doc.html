@@ -326,7 +326,8 @@
                     <li> constructor: Responsável por iniciar cada ferramenta, por padrão cada ferramenta inicia com tamanho 1 e cor "#000", isto é, preto. Isso garante que todas as ferramentas estarão
                     prontas para uso, e usarão a mesa configuração.</li>
                     <li> setup(custom): Se ocorrer uma mudança na configuração inicial, o setup garante que a ferramenta receberá aquelas mudanças. O funcionamento e razão para o custom pode ser vista <a href="#custom">aqui</a>.</li>
-                    <li> iniciar: O método iniciar aplica as mudanças no ctx, enquanto o setup aplica as mudanças no próprio objeto. Este método é o que configura o ctx para quando o usuário fazer uso da ferramenta.</li>
+                    <li> iniciar: O método iniciar aplica as mudanças no ctx, enquanto o setup aplica as mudanças no próprio objeto. Este método é o que configura o ctx para quando o usuário fazer uso da ferramenta. Pode também aplicar um clique, ou desenho
+                    único correspondente à ferramenta.</li>
                     <li> aplicar: Responsável por aplicar o desenho no canvas, é a nesse método que o usuário enxerga os efeitos do uso da ferramenta no canvas, durante o <a href="#inic_desenho">mousedown junto ao mousemove</a>.</li>
                 </ul>
                 
@@ -336,11 +337,15 @@
                     <code>
                         class Pencil extends Tool {
 
-                            iniciar(ctx) {
+                            iniciar(ctx, e) {
                                 ctx.strokeStyle = this.brush_color;
                                 ctx.lineWidth = this.brush_size;
                                 ctx.lineCap = 'round'; //Faz a linha ficar redonda
                                 ctx.lineJoin = 'round'; //Remove os spikes
+                                
+                                ctx.moveTo(e.offsetX, e.offsetY);
+                                ctx.lineTo(e.offsetX, e.offsetY);
+                                ctx.stroke();
                             }
 
                             aplicar(ctx, e) {
@@ -357,12 +362,16 @@
                 <p> Perceba que os valores do this.brush_color e this.brush_size já foram chamados no método setup herdado da superclasse.</p>
                 
                 <ul>
-                    <li>iniciar(ctx):
+                    <li>iniciar(ctx, e):
                         <ul>
                             <li>ctx.strokeStyle -> define a cor do que será desenhado a partir daquele momento no canvas.</li>
                             <li>ctx.lineWidth -> define o tamanho do pincel.</li>
                             <li>ctx.lineCap = 'round'; -> Deixa as duas extremidades da linha sempre redondas.</li>
                             <li>ctx.lineCap = 'round'; -> Deixa as conexão entre as linhas sempre redondas. Sem isso, a linha teria vários espinhos em posições aleatórias durante a aplicação e movimento da ferramenta.</li>
+                            <br>
+                            <li>ctx.moveTo(e.offsetX, e.offsetY);</li>
+                            <li>ctx.lineTo(e.offsetX, e.offsetY);</li>
+                            <li>ctx.stroke(); -> As linhas acima aplicam um ponto no canvas correspondente a configuração da ferramenta quando há um clique único.</li>
                         </ul>
                     </li>
                     <br>
@@ -389,11 +398,15 @@
                                 this.brush_size = custom["brush_size"];
                             }
 
-                            iniciar(ctx) {
+                            iniciar(ctx, e) {
                                 ctx.strokeStyle = this.brush_color;
                                 ctx.lineWidth = this.brush_size * 3;
                                 ctx.lineCap = 'round'; //Faz a linha ficar redonda
                                 ctx.lineJoin = 'round'; //Remove os spikes
+                                
+                                ctx.moveTo(e.offsetX, e.offsetY);
+                                ctx.lineTo(e.offsetX, e.offsetY);
+                                ctx.stroke();
                             }
 
                             aplicar(ctx, e) {
@@ -412,7 +425,7 @@
                     <br>
                     <li>setup: O setup só redefine o tamanho da borracha, a cor permanece a mesma declarada no construtor (branca).</li>
                     <br>
-                    <li>iniciar(ctx):
+                    <li>iniciar(ctx, e):
                         <ul>
                             <li>ctx.strokeStyle = this.brush_color; -> A cor que se refere a borracha sempre aponta para a cor branca (dito anteriormente no setup).</li>
                             <li>ctx.lineWidth = this.brush_size * 3; -> A variação do tamanho da borracha é maior por padrão.</li>
