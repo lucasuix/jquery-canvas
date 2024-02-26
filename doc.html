@@ -228,11 +228,11 @@
                 por aquela ferramenta, como o tamanho do lápis, a cor, e etc...</p>
                 <p> Este processo ocorre no método setup, e recebe o dicionário custom como parâmetro. </p>
                 <p> Seguidamente chamamos o método iniciar. Esse método aplica as mudanças de cor, tamanho do lápis, tipo de borda de linha e etc... Ao canvas, ou seja, a partir desse momento, o canvas será
-                desenhado utilizando as configurações específicas daquela ferramenta. </p>
+                desenhado utilizando as configurações específicas daquela ferramenta, também aplica um ponto único no caso de algumas ferramentas. </p>
                 <pre>
                     <code>
                         tools[current_tool].setup(custom);
-                        tools[current_tool].iniciar(ctx);
+                        tools[current_tool].iniciar(ctx, e);
                     </code>
                 </pre>
                 
