@@ -236,10 +236,10 @@
                     </code>
                 </pre>
                 
-                <p> Então, o desenho, ou seja, a aplicação será executada no canvas todas vez que o mouse (ainda pressionado) se mover pelo mesmo (LEMBRANDO QUE ESSE EVENTO ESTÁ DENTRO DO ESCOPO DO $(canvas).on('mousedown'...):</p>
+                <p> Então, o desenho, ou seja, a aplicação será executada no canvas todas vez que o mouse (ainda pressionado) se mover pelo mesmo, ou apenas durante um clique (mousedown) (LEMBRANDO QUE ESSE EVENTO ESTÁ DENTRO DO ESCOPO DO $(canvas).on('mousedown'...):</p>
                 <pre>
                     <code>
-                        $(canvas).on('mousemove', function(e) {
+                        $(canvas).on('mousemove mousedown', function(e) {
                             tools[current_tool].aplicar(ctx, e);
                         });
                     });

@@ -108,7 +108,7 @@
             tools[current_tool].iniciar(ctx); //Preferências e funcionamento da ferramenta passado para o canvas 
 
             // Aplica a ferramenta no canvas
-            $(canvas).on('mousemove', function(e) { tools[current_tool].aplicar(ctx, e); });
+            $(canvas).on('mousedown mousemove', function(e) { tools[current_tool].aplicar(ctx, e); });
         });
 
         
