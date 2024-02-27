@@ -69,7 +69,7 @@
             "elipse": new Ellipse(),
             "elipse_fill": new EllipseFill(),
             "linha": new Line(),
-            "balde": new Bucket
+            "balde": new Bucket()
         };
 
         const custom = {

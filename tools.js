@@ -247,26 +247,59 @@ class Bucket extends Tool {
         // Retornar valores de cor RGB
         return { r: r, g: g, b: b };
     }
-    
+
+
+    verifyColor(x, y, target_color, selected_color, ctx) {
+
+        if (this.rgbToHex(ctx.getImageData(x, y, 1, 1).data) == selected_color ||
+            x <= 0 || y <= 0 ||
+            x >= this.canvas_size["width"] || y >= this.canvas_size["height"]) { return false; }
+        
+        if (this.rgbToHex(ctx.getImageData(x, y, 1, 1).data) != target_color) {
+
+            return false; 
+        }
+
+        return true;
+
+    }
     
     
     floodFill(x, y, target_color, selected_color, ctx, new_pixel) {
         
-        
-        if (this.rgbToHex(ctx.getImageData(x, y, 1, 1).data) == selected_color ||
-            x <= 0 || y <= 0 ||
-            x > this.canvas_size["width"] || y > this.canvas_size["height"]) { return; }
-        
-        if (this.rgbToHex(ctx.getImageData(x, y, 1, 1).data) != target_color) { return; }
-        
-        //Trocando o pixel
+        if (! this.verifyColor(x, y, target_color, selected_color, ctx)) return;
         ctx.putImageData(new_pixel, x, y);
+
+        let q = [[x,y]]; //
+
+        do {
+            // Aplico a ideia aqui, não vou usar o stack, mas um queue para ir armazenando pixels e pegando sempre o primeiro.
+            x = q[0][0];
+            y = q[0][1];
+
+            if(this.verifyColor(x + 1, y, target_color, selected_color, ctx)) {
+                ctx.putImageData(new_pixel, x + 1, y);
+                q.push([x + 1, y]);
+            }
+            if(this.verifyColor(x - 1, y, target_color, selected_color, ctx)) {
+                ctx.putImageData(new_pixel, x - 1, y);
+                q.push([x - 1, y]);
+            }
+            if(this.verifyColor(x, y + 1, target_color, selected_color, ctx)) {
+                ctx.putImageData(new_pixel, x, y + 1);
+                q.push([x, y + 1]);
+            }
+            if(this.verifyColor(x, y - 1, target_color, selected_color, ctx)) {
+                ctx.putImageData(new_pixel, x, y - 1);
+                q.push([x, y - 1]);
+            }
+
+            q.shift();
+
+
+        } while(q.length > 0)
         
-        this.floodFill(x + 1, y, target_color, selected_color, ctx, new_pixel);
-        this.floodFill(x - 1, y, target_color, selected_color, ctx, new_pixel);
-        this.floodFill(x, y + 1, target_color, selected_color, ctx, new_pixel);
-        this.floodFill(x, y - 1, target_color, selected_color, ctx, new_pixel);
-        
+
         return;
     }
   
