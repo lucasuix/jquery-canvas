@@ -20,7 +20,7 @@
 </head>
 <body>
 
-    <canvas id="canvas" width="400px" height="400px">
+    <canvas id="canvas" width="1080px" height="720px">
     </canvas>
 
     <!-- Opções de formas -->
@@ -46,7 +46,8 @@
     <script>
         const canvas = document.querySelector("canvas");
         ctx = canvas.getContext("2d");
-        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingEnabled = false;
+        ctx.willReadFrequently = true;
         
         ctx.fillStyle = "#FFFFFF"; // Define a cor como branco
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);

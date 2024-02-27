@@ -247,18 +247,27 @@ class Bucket extends Tool {
         // Retornar valores de cor RGB
         return { r: r, g: g, b: b };
     }
-
-
-    verifyColor(x, y, target_color, selected_color, ctx) {
-
-        if (this.rgbToHex(ctx.getImageData(x, y, 1, 1).data) == selected_color ||
-            x <= 0 || y <= 0 ||
-            x >= this.canvas_size["width"] || y >= this.canvas_size["height"]) { return false; }
+    
+    comparePixels(current, new_color) { //Retorna True se as cores forem iguais, retorna False se as cores forem diferentes
         
-        if (this.rgbToHex(ctx.getImageData(x, y, 1, 1).data) != target_color) {
+        //1º do tipo array, 2º do tipo dicionário
+        return (current[0] == new_color.r &&
+                current[1] == new_color.g &&
+                current[2] == new_color.b);
+        
+    }
 
-            return false; 
-        }
+
+    //Selected color já está no tipo dicionário
+    verifyColor(x, y, target_color, selected_color, ctx) {
+        
+        let current_color = ctx.getImageData(x,y,1,1).data;
+        
+        if (this.comparePixels(current_color, selected_color) ||
+            x <= 0 || y <= 0 ||
+            x >= this.canvas_size["width"] || y >= this.canvas_size["height"]) return false;
+        
+        if (! this.comparePixels(current_color, target_color)) return false; 
 
         return true;
 
@@ -307,20 +316,25 @@ class Bucket extends Tool {
     // Aqui de fato é onde a mágica acontece, a aplicação da ferramenta em um clique único
     iniciar(ctx, e) {
         
-        let pixel = ctx.getImageData(e.offsetX, e.offsetY, 1, 1).data; //Cor atual onde foi selecionado e que será comparado
-        let new_color = this.hexToRgb(this.brush_color); //Cor selecionada mas em formato RGB
-        let aim_color = this.rgbToHex(pixel); //Cor alvo em formato hexadecimal para comparar com a cor da classe que também é uma string hexadecimal
+        let target_pixel = ctx.getImageData(e.offsetX, e.offsetY, 1, 1).data; //Cor atual onde foi selecionado e que será comparado
+        let selected_color = this.hexToRgb(this.brush_color); //Cor selecionada mas em formato RGB
         
         //Pixel com a cor nova para subsituir os pixels antigos
         let pixelData = ctx.createImageData(1, 1);
         
-        pixelData.data[0] = new_color.r; // Vermelho
-        pixelData.data[1] = new_color.g; // Verde
-        pixelData.data[2] = new_color.b; // Azul
+        pixelData.data[0] = selected_color.r; // Vermelho
+        pixelData.data[1] = selected_color.g; // Verde
+        pixelData.data[2] = selected_color.b; // Azul
         pixelData.data[3] = 255; // Opacidade (alfa)
         
+        let target_color = {
+            r: target_pixel[0],
+            g: target_pixel[1],
+            b: target_pixel[2],
+        };
         
-        this.floodFill(e.offsetX, e.offsetY, aim_color, this.brush_color, ctx, pixelData);
+        
+        this.floodFill(e.offsetX, e.offsetY, target_color, selected_color, ctx, pixelData);
         
         //Cor desejada nós já sabemos, é this.brush_color, mas está no formato #xxxxxx
         //data vem em um array: pixel_color[0] -> R; pixel_color[1] -> G; pixel_color[2] -> B, pixel_color[4] -> nível de transparência
