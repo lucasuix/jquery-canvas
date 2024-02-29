@@ -287,6 +287,34 @@ class Bucket extends Tool {
         return; 
     }
     
+    checkAroundEast(x, y, target_color, selected_color, ctx) {
+        
+        return (this.verifyColor(x + 2, y, target_color, selected_color, ctx) &&
+                this.verifyColor(x, y - 2, target_color, selected_color, ctx) &&
+                this.verifyColor(x, y + 2, target_color, selected_color, ctx));
+    }
+    
+    checkAroundWest(x, y, target_color, selected_color, ctx) {
+        
+        return (this.verifyColor(x - 2, y, target_color, selected_color, ctx) &&
+                this.verifyColor(x, y - 2, target_color, selected_color, ctx) &&
+                this.verifyColor(x, y + 2, target_color, selected_color, ctx));
+    }
+    
+    checkAroundNorth(x, y, target_color, selected_color, ctx) {
+        
+        return (this.verifyColor(x + 2, y, target_color, selected_color, ctx) &&
+                this.verifyColor(x - 2, y, target_color, selected_color, ctx) &&
+                this.verifyColor(x, y - 2, target_color, selected_color, ctx));
+    }
+    
+    checkAroundSouth(x, y, target_color, selected_color, ctx) {
+        
+        return (this.verifyColor(x + 2, y, target_color, selected_color, ctx) &&
+                this.verifyColor(x - 2, y, target_color, selected_color, ctx) &&
+                this.verifyColor(x, y + 2, target_color, selected_color, ctx));
+    }
+    
     
     floodFill(x, y, target_color, selected_color, ctx, new_pixel) {
         
@@ -295,8 +323,9 @@ class Bucket extends Tool {
         ctx.putImageData(new_pixel, x, y);
 
         let q = [[x,y]]; //
+        let p = [[x,y]];
         let step = 3;
-        let square_side = (step*2) - 1;
+        let square_side = 3;
         //let p = [[x,y]];
         ctx.fillStyle = this.brush_color;
 
@@ -305,27 +334,35 @@ class Bucket extends Tool {
             x = q[0][0];
             y = q[0][1];
 
-            if(this.verifyColor(x + step, y, target_color, selected_color, ctx)) {
+            if(this.verifyColor(x + step, y, target_color, selected_color, ctx)
+                && this.checkAroundEast(x + step, y, target_color, selected_color, ctx)) {
+                
                 ctx.putImageData(new_pixel, x + step, y);
-                ctx.fillRect(x - (step - 1), y - (step - 1), square_side, square_side);
+                ctx.fillRect(x - 1, y - 1, square_side, square_side);
                 q.push([x + step, y]);
                 //p.push([x + 4, y]);
             }
-            if(this.verifyColor(x - step, y, target_color, selected_color, ctx)) {
+            if(this.verifyColor(x - step, y, target_color, selected_color, ctx)
+                && this.checkAroundWest(x - step, y, target_color, selected_color, ctx)) {
+                
                 ctx.putImageData(new_pixel, x - step, y);
-                ctx.fillRect(x - (step - 1), y - (step - 1), square_side, square_side);
+                ctx.fillRect(x - 1, y - 1, square_side, square_side);
                 q.push([x - step, y]);
                 //p.push([x - 4, y]);
             }
-            if(this.verifyColor(x, y + step, target_color, selected_color, ctx)) {
+            if(this.verifyColor(x, y + step, target_color, selected_color, ctx)
+                && this.checkAroundSouth(x, y + step, target_color, selected_color, ctx)) {
+                    
                 ctx.putImageData(new_pixel, x, y + step);
-                ctx.fillRect(x - (step - 1), y - (step - 1), square_side, square_side);
+                ctx.fillRect(x - 1, y - 1, square_side, square_side);
                 q.push([x, y + step]);
                 //p.push([x, y + 4]);
             }
-            if(this.verifyColor(x, y - step, target_color, selected_color, ctx)) {
+            if(this.verifyColor(x, y - step, target_color, selected_color, ctx)
+                && this.checkAroundNorth(x, y - step, target_color, selected_color, ctx)) {
+                    
                 ctx.putImageData(new_pixel, x, y - step);
-                ctx.fillRect(x - (step - 1), y - (step - 1), square_side, square_side);
+                ctx.fillRect(x - 1, y - 1, square_side, square_side);
                 q.push([x, y - step]);
                 //p.push([x, y - 4]);
             }
@@ -338,6 +375,9 @@ class Bucket extends Tool {
 
 
         } while(q.length > 0);
+        
+        //Preciso de uma coordenada na frente da outra
+        //Aplicar só os que já foram validados
 
         
         //Se for aplicar isso, vamos ter alguns problemas: o Tamanho mínimo do pincel tem que ser 4
