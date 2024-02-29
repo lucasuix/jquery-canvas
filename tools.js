@@ -224,10 +224,8 @@ class Bucket extends Tool {
     setup(custom) {
         this.brush_size = 1; // O tamanho da ferramenta é sempre um pixel independente do que aconteça
         this.brush_color = custom["brush_color"];
-        
         this.canvas_size = custom["canvas_size"];
     }
-    
     
     rgbToHex(pixel) {
         
@@ -261,52 +259,102 @@ class Bucket extends Tool {
     //Selected color já está no tipo dicionário
     verifyColor(x, y, target_color, selected_color, ctx) {
         
-        let current_color = ctx.getImageData(x,y,1,1).data;
+        let current_color = ctx.getImageData(x,y,1,1).data; //Cor do pixel em questão
         
-        if (this.comparePixels(current_color, selected_color) ||
+        //Verifico se é o mesmo que a cor que eu já tenho (então não preciso pintar e retorno)
+        if (this.comparePixels(current_color, selected_color) || 
             x <= 0 || y <= 0 ||
             x >= this.canvas_size["width"] || y >= this.canvas_size["height"]) return false;
         
+        //Se for diferente da cor que é meu alvo (a cor da área que eu quero pintar, retorno falso)
         if (! this.comparePixels(current_color, target_color)) return false; 
 
         return true;
 
     }
+
+
+    recursiveFill(x, y, target_color, selected_color, ctx, new_pixel) {
+
+        if (! this.verifyColor(x, y, target_color, selected_color, ctx)) return;
+        ctx.putImageData(new_pixel, x, y);
+
+        this.recursiveFill(x + 1, y, target_color, selected_color, ctx, new_pixel);
+        this.recursiveFill(x - 1, y, target_color, selected_color, ctx, new_pixel);
+        this.recursiveFill(x, y + 1, target_color, selected_color, ctx, new_pixel);
+        this.recursiveFill(x, y - 1, target_color, selected_color, ctx, new_pixel);
+
+        return; 
+    }
     
     
     floodFill(x, y, target_color, selected_color, ctx, new_pixel) {
         
+        //Se ocorrer um dos casos de exceção do verifyColor retorna imediatamente (cliquei em um pixel que tem a mesma cor que eu selecionei)
         if (! this.verifyColor(x, y, target_color, selected_color, ctx)) return;
         ctx.putImageData(new_pixel, x, y);
 
         let q = [[x,y]]; //
+        let step = 4;
+        let half_step = parseInt(step/2);
+        //let p = [[x,y]];
+        ctx.fillStyle = this.brush_color;
 
         do {
             // Aplico a ideia aqui, não vou usar o stack, mas um queue para ir armazenando pixels e pegando sempre o primeiro.
             x = q[0][0];
             y = q[0][1];
 
-            if(this.verifyColor(x + 1, y, target_color, selected_color, ctx)) {
-                ctx.putImageData(new_pixel, x + 1, y);
-                q.push([x + 1, y]);
+            if(this.verifyColor(x + step, y, target_color, selected_color, ctx)) {
+                ctx.putImageData(new_pixel, x + step, y);
+                ctx.fillRect(x - half_step, y - half_step, step, step);
+                q.push([x + step, y]);
+                //p.push([x + 4, y]);
             }
-            if(this.verifyColor(x - 1, y, target_color, selected_color, ctx)) {
-                ctx.putImageData(new_pixel, x - 1, y);
-                q.push([x - 1, y]);
+            if(this.verifyColor(x - step, y, target_color, selected_color, ctx)) {
+                ctx.putImageData(new_pixel, x - step, y);
+                ctx.fillRect(x - half_step, y - half_step, step, step);
+                q.push([x - step, y]);
+                //p.push([x - 4, y]);
             }
-            if(this.verifyColor(x, y + 1, target_color, selected_color, ctx)) {
-                ctx.putImageData(new_pixel, x, y + 1);
-                q.push([x, y + 1]);
+            if(this.verifyColor(x, y + step, target_color, selected_color, ctx)) {
+                ctx.putImageData(new_pixel, x, y + step);
+                ctx.fillRect(x - half_step, y - half_step, step, step);
+                q.push([x, y + step]);
+                //p.push([x, y + 4]);
             }
-            if(this.verifyColor(x, y - 1, target_color, selected_color, ctx)) {
-                ctx.putImageData(new_pixel, x, y - 1);
-                q.push([x, y - 1]);
+            if(this.verifyColor(x, y - step, target_color, selected_color, ctx)) {
+                ctx.putImageData(new_pixel, x, y - step);
+                ctx.fillRect(x - half_step, y - half_step, step, step);
+                q.push([x, y - step]);
+                //p.push([x, y - 4]);
             }
+
+            //Jogar as coordenadas que esbarraram em algum lugar e aplicar o recursivo nelas
+            //Ou seja, quando o pivô esbarrar em alguma cor que não é a cor alvo,
+            //Ou em algum lugar que está fora dos limites do canvas, aplica o recursivo
 
             q.shift();
 
 
-        } while(q.length > 0)
+        } while(q.length > 0);
+
+        
+        //Se for aplicar isso, vamos ter alguns problemas: o Tamanho mínimo do pincel tem que ser 4
+        // -> Se tiver um valor menor que 4, a tinta pode acabar pulando ela e pintando o lado externo se tiver a mesma cor do lado interno
+        // MAS FUNCIONA DE QUALQUER MANEIRA, ENTRETANTO O VALOR DO TAMANHO DO PINCEL TEM QUE SER MAIOR QUE ESSES SALTOS (NO CASO 4)
+        // do {
+
+        //     x = p[0][0];
+        //     y = p[0][1];
+
+        //     ctx.fillStyle = this.brush_color;
+        //     ctx.fillRect(x - 2, y - 2, 4, 4);
+
+        //     p.shift();
+
+
+        // } while(p.length > 0);
         
 
         return;
