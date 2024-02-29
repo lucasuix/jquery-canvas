@@ -295,8 +295,8 @@ class Bucket extends Tool {
         ctx.putImageData(new_pixel, x, y);
 
         let q = [[x,y]]; //
-        let step = 4;
-        let half_step = parseInt(step/2);
+        let step = 3;
+        let square_side = (step*2) - 1;
         //let p = [[x,y]];
         ctx.fillStyle = this.brush_color;
 
@@ -307,25 +307,25 @@ class Bucket extends Tool {
 
             if(this.verifyColor(x + step, y, target_color, selected_color, ctx)) {
                 ctx.putImageData(new_pixel, x + step, y);
-                ctx.fillRect(x - half_step, y - half_step, step, step);
+                ctx.fillRect(x - (step - 1), y - (step - 1), square_side, square_side);
                 q.push([x + step, y]);
                 //p.push([x + 4, y]);
             }
             if(this.verifyColor(x - step, y, target_color, selected_color, ctx)) {
                 ctx.putImageData(new_pixel, x - step, y);
-                ctx.fillRect(x - half_step, y - half_step, step, step);
+                ctx.fillRect(x - (step - 1), y - (step - 1), square_side, square_side);
                 q.push([x - step, y]);
                 //p.push([x - 4, y]);
             }
             if(this.verifyColor(x, y + step, target_color, selected_color, ctx)) {
                 ctx.putImageData(new_pixel, x, y + step);
-                ctx.fillRect(x - half_step, y - half_step, step, step);
+                ctx.fillRect(x - (step - 1), y - (step - 1), square_side, square_side);
                 q.push([x, y + step]);
                 //p.push([x, y + 4]);
             }
             if(this.verifyColor(x, y - step, target_color, selected_color, ctx)) {
                 ctx.putImageData(new_pixel, x, y - step);
-                ctx.fillRect(x - half_step, y - half_step, step, step);
+                ctx.fillRect(x - (step - 1), y - (step - 1), square_side, square_side);
                 q.push([x, y - step]);
                 //p.push([x, y - 4]);
             }
