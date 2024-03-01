@@ -220,16 +220,13 @@ class Line extends slidingTools {
 
 
 class Bucket extends Tool {
+
+    //A RESOLUÇÃO 1080 E 720 ESTÁ HARD 'CODADA' NA FUNÇÃO DO WILLIAM MALONE
     
     setup(custom) {
         this.brush_size = 1; // O tamanho da ferramenta é sempre um pixel independente do que aconteça
         this.brush_color = custom["brush_color"];
         this.canvas_size = custom["canvas_size"];
-    }
-    
-    rgbToHex(pixel) {
-        
-        return "#" + ((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2]).toString(16).slice(1);
     }
     
     hexToRgb(hex) {
@@ -246,194 +243,113 @@ class Bucket extends Tool {
         return { r: r, g: g, b: b };
     }
     
-    comparePixels(current, new_color) { //Retorna True se as cores forem iguais, retorna False se as cores forem diferentes
-        
-        //1º do tipo array, 2º do tipo dicionário
-        return (current[0] == new_color.r &&
-                current[1] == new_color.g &&
-                current[2] == new_color.b);
-        
+
+    matchStartColor(pixelPos) {
+        let r = this.colorLayer.data[pixelPos];
+        let g = this.colorLayer.data[pixelPos + 1];
+        let b = this.colorLayer.data[pixelPos + 2];
+        return r === this.startR && g === this.startG && b === this.startB;
     }
 
-
-    //Selected color já está no tipo dicionário
-    verifyColor(x, y, target_color, selected_color, ctx) {
-        
-        let current_color = ctx.getImageData(x,y,1,1).data; //Cor do pixel em questão
-        
-        //Verifico se é o mesmo que a cor que eu já tenho (então não preciso pintar e retorno)
-        if (this.comparePixels(current_color, selected_color) || 
-            x <= 0 || y <= 0 ||
-            x >= this.canvas_size["width"] || y >= this.canvas_size["height"]) return false;
-        
-        //Se for diferente da cor que é meu alvo (a cor da área que eu quero pintar, retorno falso)
-        if (! this.comparePixels(current_color, target_color)) return false; 
-
-        return true;
-
+    colorPixel(pixelPos, selected_color) {
+        this.colorLayer.data[pixelPos] = selected_color.r;
+        this.colorLayer.data[pixelPos + 1] = selected_color.g;
+        this.colorLayer.data[pixelPos + 2] = selected_color.b;
+        this.colorLayer.data[pixelPos + 3] = 255;
     }
 
+    //William Malone Algorithm
+    floodFill(startX, startY, selected_color, ctx,
+        newPos, x, y, pixelPos, reachLeft, reachRight) {
 
-    recursiveFill(x, y, target_color, selected_color, ctx, new_pixel) {
-
-        if (! this.verifyColor(x, y, target_color, selected_color, ctx)) return;
-        ctx.putImageData(new_pixel, x, y);
-
-        this.recursiveFill(x + 1, y, target_color, selected_color, ctx, new_pixel);
-        this.recursiveFill(x - 1, y, target_color, selected_color, ctx, new_pixel);
-        this.recursiveFill(x, y + 1, target_color, selected_color, ctx, new_pixel);
-        this.recursiveFill(x, y - 1, target_color, selected_color, ctx, new_pixel);
-
-        return; 
-    }
-    
-    checkAroundEast(x, y, target_color, selected_color, ctx) {
-        
-        return (this.verifyColor(x + 2, y, target_color, selected_color, ctx) &&
-                this.verifyColor(x, y - 2, target_color, selected_color, ctx) &&
-                this.verifyColor(x, y + 2, target_color, selected_color, ctx));
-    }
-    
-    checkAroundWest(x, y, target_color, selected_color, ctx) {
-        
-        return (this.verifyColor(x - 2, y, target_color, selected_color, ctx) &&
-                this.verifyColor(x, y - 2, target_color, selected_color, ctx) &&
-                this.verifyColor(x, y + 2, target_color, selected_color, ctx));
-    }
-    
-    checkAroundNorth(x, y, target_color, selected_color, ctx) {
-        
-        return (this.verifyColor(x + 2, y, target_color, selected_color, ctx) &&
-                this.verifyColor(x - 2, y, target_color, selected_color, ctx) &&
-                this.verifyColor(x, y - 2, target_color, selected_color, ctx));
-    }
-    
-    checkAroundSouth(x, y, target_color, selected_color, ctx) {
-        
-        return (this.verifyColor(x + 2, y, target_color, selected_color, ctx) &&
-                this.verifyColor(x - 2, y, target_color, selected_color, ctx) &&
-                this.verifyColor(x, y + 2, target_color, selected_color, ctx));
-    }
-    
-    
-    floodFill(x, y, target_color, selected_color, ctx, new_pixel) {
-        
-        //Se ocorrer um dos casos de exceção do verifyColor retorna imediatamente (cliquei em um pixel que tem a mesma cor que eu selecionei)
-        if (! this.verifyColor(x, y, target_color, selected_color, ctx)) return;
-        ctx.putImageData(new_pixel, x, y);
-
-        let q = [[x,y]]; //
-        let p = [];
-        let step = 3;
-        let square_side = 3;
-        ctx.fillStyle = this.brush_color;
-
-        do {
-            // Aplico a ideia aqui, não vou usar o stack, mas um queue para ir armazenando pixels e pegando sempre o primeiro.
-            x = q[0][0];
-            y = q[0][1];
-
-            if(this.verifyColor(x + step, y, target_color, selected_color, ctx)) {
-
-                if (this.checkAroundEast(x + step, y, target_color, selected_color, ctx)) {
-                    ctx.putImageData(new_pixel, x + step, y);
-                    ctx.fillRect(x - 1, y - 1, square_side, square_side);
-                    q.push([x + step, y]);
-                }
-                else p.push([x + step, y]);
-
+            newPos = this.pixelStack.pop();
+            x = newPos[0];
+            y = newPos[1];
+            //get current pixel position
+            pixelPos = (y * 1080 + x) * 4;
+            // Go up as long as the color matches and are inside the canvas
+            while (y >= 0 && this.matchStartColor(pixelPos, selected_color)) {
+              y--;
+              pixelPos -= 1080 * 4;
             }
-            if(this.verifyColor(x - step, y, target_color, selected_color, ctx)) {
-                
-                if (this.checkAroundWest(x - step, y, target_color, selected_color, ctx)) {
-                    ctx.putImageData(new_pixel, x - step, y);
-                    ctx.fillRect(x - 1, y - 1, square_side, square_side);
-                    q.push([x - step, y]);
+            //Don't overextend
+            pixelPos += 1080 * 4;
+            y++;
+            reachLeft = false;
+            reachRight = false;
+            // Go down as long as the color matches and in inside the canvas
+            while (y < 720 && this.matchStartColor(pixelPos, selected_color)) {
+              this.colorPixel(pixelPos, selected_color);
+              if (x > 0) {
+                if (this.matchStartColor(pixelPos - 4, selected_color)) {
+                  if (!reachLeft) {
+                    //Add pixel to stack
+                    this.pixelStack.push([x - 1, y]);
+                    reachLeft = true;
+                  }
+                } else if (reachLeft) {
+                  reachLeft = false;
                 }
-                else p.push([x - step, y]);
-
-            }
-            if(this.verifyColor(x, y + step, target_color, selected_color, ctx)) {
-                
-                if (this.checkAroundSouth(x, y + step, target_color, selected_color, ctx)) {
-                    ctx.putImageData(new_pixel, x, y + step);
-                    ctx.fillRect(x - 1, y - 1, square_side, square_side);
-                    q.push([x, y + step]); 
+              }
+              if (x < 1080 - 1) {
+                if (this.matchStartColor(pixelPos + 4, selected_color)) {
+                  if (!reachRight) {
+                    //Add pixel to stack
+                    this.pixelStack.push([x + 1, y]);
+                    reachRight = true;
+                  }
+                } else if (reachRight) {
+                  reachRight = false;
                 }
-                else p.push([x - step, y]);
-
+              }
+              y++;
+              pixelPos += 1080 * 4;
             }
-            if(this.verifyColor(x, y - step, target_color, selected_color, ctx)) {
-                
-                if (this.checkAroundNorth(x, y - step, target_color, selected_color, ctx)) {
-
-                    ctx.putImageData(new_pixel, x, y - step);
-                    ctx.fillRect(x - 1, y - 1, square_side, square_side);
-                    q.push([x, y - step]);
-                }
-                else p.push([x, y - step]);
-                
+            //recursive until no more pixels to change
+            if (this.pixelStack.length) {
+              this.floodFill(startX, startY, selected_color, ctx,
+                newPos, x, y, pixelPos, reachLeft, reachRight);
             }
+    }
 
-            q.shift();
+    actionFill(startX, startY, selected_color, ctx) {
 
+        this.colorLayer = ctx.getImageData(
+            0,
+            0,
+            1080,
+            720
+        );
 
-        } while(q.length > 0);
+        let startPos = (startY * 1080 + startX) * 4;
 
-        console.log(p);
+        //Acredito que pega a cor específica
+        this.startR = this.colorLayer.data[startPos];
+        this.startG = this.colorLayer.data[startPos + 1];
+        this.startB = this.colorLayer.data[startPos + 2];
+
+        if (selected_color.r === this.startR &&
+            selected_color.g === this.startG &&
+            selected_color.b === this.startB) return;
+
+        this.pixelStack = [[startX,startY]];
+        let newPos, x, y, pixelPos, reachLeft, reachRight;
+
+        this.floodFill(startX, startY, selected_color, ctx,
+                        newPos, x, y, pixelPos, reachLeft, reachRight);
         
-        let old_color = ctx.createImageData(1, 1);
-
-        old_color.data[0] = target_color.r;
-        old_color.data[1] = target_color.g;
-        old_color.data[2] = target_color.b;
-        old_color.data[3] = 255;
-
-        p.forEach(element => {
-            
-            x = element[0];
-            y = element[1];
-
-            ctx.putImageData(old_color, x, y);
-            this.recursiveFill(x, y, target_color, selected_color, ctx, new_pixel);
-
-        });
+        ctx.putImageData(this.colorLayer, 0, 0);
         
-        //FUNCIONA FINALMENTE SÓ TENHO QUE VER PQ O STACK EXPLODE ÀS VEZES (PRINCIPALMENTE EM TELAS CHEIAS)
-        //TAMBÉME ENTENDER PQ ALGUNS LUGARES FICAM COM SOBRAS, QUANDO PASSO UMA LINHA NA OUTRA
-        //Bem, fiz tudo que pude para melhorar isso aqui,
-        //Mas agora resta implementar um que sei que vai funcionar bem:
-        //https://cantwell-tom.medium.com/flood-fill-and-line-tool-for-html-canvas-65e08e31aec6
 
-        return;
     }
   
         
     // Aqui de fato é onde a mágica acontece, a aplicação da ferramenta em um clique único
     iniciar(ctx, e) {
-        
-        let target_pixel = ctx.getImageData(e.offsetX, e.offsetY, 1, 1).data; //Cor atual onde foi selecionado e que será comparado
+
         let selected_color = this.hexToRgb(this.brush_color); //Cor selecionada mas em formato RGB
+        this.actionFill(e.offsetX, e.offsetY, selected_color, ctx);
         
-        //Pixel com a cor nova para subsituir os pixels antigos
-        let pixelData = ctx.createImageData(1, 1);
-        
-        pixelData.data[0] = selected_color.r; // Vermelho
-        pixelData.data[1] = selected_color.g; // Verde
-        pixelData.data[2] = selected_color.b; // Azul
-        pixelData.data[3] = 255; // Opacidade (alfa)
-        
-        let target_color = {
-            r: target_pixel[0],
-            g: target_pixel[1],
-            b: target_pixel[2],
-        };
-        
-        
-        this.floodFill(e.offsetX, e.offsetY, target_color, selected_color, ctx, pixelData);
-        
-        //Cor desejada nós já sabemos, é this.brush_color, mas está no formato #xxxxxx
-        //data vem em um array: pixel_color[0] -> R; pixel_color[1] -> G; pixel_color[2] -> B, pixel_color[4] -> nível de transparência
         
     }
     
