@@ -39,7 +39,7 @@
     </div>
 
     <div id="custom">
-        <input type="range" id="brushSize" min="5" max="100" value="1">
+        <input type="range" id="brushSize" min="1" max="100" value="1">
         <input type="color" id="brushColor">
     </div>
     
