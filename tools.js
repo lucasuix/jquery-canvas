@@ -323,10 +323,9 @@ class Bucket extends Tool {
         ctx.putImageData(new_pixel, x, y);
 
         let q = [[x,y]]; //
-        let p = [[x,y]];
+        let p = [];
         let step = 3;
         let square_side = 3;
-        //let p = [[x,y]];
         ctx.fillStyle = this.brush_color;
 
         do {
@@ -334,68 +333,77 @@ class Bucket extends Tool {
             x = q[0][0];
             y = q[0][1];
 
-            if(this.verifyColor(x + step, y, target_color, selected_color, ctx)
-                && this.checkAroundEast(x + step, y, target_color, selected_color, ctx)) {
-                
-                ctx.putImageData(new_pixel, x + step, y);
-                ctx.fillRect(x - 1, y - 1, square_side, square_side);
-                q.push([x + step, y]);
-                //p.push([x + 4, y]);
-            }
-            if(this.verifyColor(x - step, y, target_color, selected_color, ctx)
-                && this.checkAroundWest(x - step, y, target_color, selected_color, ctx)) {
-                
-                ctx.putImageData(new_pixel, x - step, y);
-                ctx.fillRect(x - 1, y - 1, square_side, square_side);
-                q.push([x - step, y]);
-                //p.push([x - 4, y]);
-            }
-            if(this.verifyColor(x, y + step, target_color, selected_color, ctx)
-                && this.checkAroundSouth(x, y + step, target_color, selected_color, ctx)) {
-                    
-                ctx.putImageData(new_pixel, x, y + step);
-                ctx.fillRect(x - 1, y - 1, square_side, square_side);
-                q.push([x, y + step]);
-                //p.push([x, y + 4]);
-            }
-            if(this.verifyColor(x, y - step, target_color, selected_color, ctx)
-                && this.checkAroundNorth(x, y - step, target_color, selected_color, ctx)) {
-                    
-                ctx.putImageData(new_pixel, x, y - step);
-                ctx.fillRect(x - 1, y - 1, square_side, square_side);
-                q.push([x, y - step]);
-                //p.push([x, y - 4]);
-            }
+            if(this.verifyColor(x + step, y, target_color, selected_color, ctx)) {
 
-            //Jogar as coordenadas que esbarraram em algum lugar e aplicar o recursivo nelas
-            //Ou seja, quando o pivô esbarrar em alguma cor que não é a cor alvo,
-            //Ou em algum lugar que está fora dos limites do canvas, aplica o recursivo
+                if (this.checkAroundEast(x + step, y, target_color, selected_color, ctx)) {
+                    ctx.putImageData(new_pixel, x + step, y);
+                    ctx.fillRect(x - 1, y - 1, square_side, square_side);
+                    q.push([x + step, y]);
+                }
+                else p.push([x + step, y]);
+
+            }
+            if(this.verifyColor(x - step, y, target_color, selected_color, ctx)) {
+                
+                if (this.checkAroundWest(x - step, y, target_color, selected_color, ctx)) {
+                    ctx.putImageData(new_pixel, x - step, y);
+                    ctx.fillRect(x - 1, y - 1, square_side, square_side);
+                    q.push([x - step, y]);
+                }
+                else p.push([x - step, y]);
+
+            }
+            if(this.verifyColor(x, y + step, target_color, selected_color, ctx)) {
+                
+                if (this.checkAroundSouth(x, y + step, target_color, selected_color, ctx)) {
+                    ctx.putImageData(new_pixel, x, y + step);
+                    ctx.fillRect(x - 1, y - 1, square_side, square_side);
+                    q.push([x, y + step]); 
+                }
+                else p.push([x - step, y]);
+
+            }
+            if(this.verifyColor(x, y - step, target_color, selected_color, ctx)) {
+                
+                if (this.checkAroundNorth(x, y - step, target_color, selected_color, ctx)) {
+
+                    ctx.putImageData(new_pixel, x, y - step);
+                    ctx.fillRect(x - 1, y - 1, square_side, square_side);
+                    q.push([x, y - step]);
+                }
+                else p.push([x, y - step]);
+                
+            }
 
             q.shift();
 
 
         } while(q.length > 0);
+
+        console.log(p);
         
-        //Preciso de uma coordenada na frente da outra
-        //Aplicar só os que já foram validados
+        let old_color = ctx.createImageData(1, 1);
 
+        old_color.data[0] = target_color.r;
+        old_color.data[1] = target_color.g;
+        old_color.data[2] = target_color.b;
+        old_color.data[3] = 255;
+
+        p.forEach(element => {
+            
+            x = element[0];
+            y = element[1];
+
+            ctx.putImageData(old_color, x, y);
+            this.recursiveFill(x, y, target_color, selected_color, ctx, new_pixel);
+
+        });
         
-        //Se for aplicar isso, vamos ter alguns problemas: o Tamanho mínimo do pincel tem que ser 4
-        // -> Se tiver um valor menor que 4, a tinta pode acabar pulando ela e pintando o lado externo se tiver a mesma cor do lado interno
-        // MAS FUNCIONA DE QUALQUER MANEIRA, ENTRETANTO O VALOR DO TAMANHO DO PINCEL TEM QUE SER MAIOR QUE ESSES SALTOS (NO CASO 4)
-        // do {
-
-        //     x = p[0][0];
-        //     y = p[0][1];
-
-        //     ctx.fillStyle = this.brush_color;
-        //     ctx.fillRect(x - 2, y - 2, 4, 4);
-
-        //     p.shift();
-
-
-        // } while(p.length > 0);
-        
+        //FUNCIONA FINALMENTE SÓ TENHO QUE VER PQ O STACK EXPLODE ÀS VEZES (PRINCIPALMENTE EM TELAS CHEIAS)
+        //TAMBÉME ENTENDER PQ ALGUNS LUGARES FICAM COM SOBRAS, QUANDO PASSO UMA LINHA NA OUTRA
+        //Bem, fiz tudo que pude para melhorar isso aqui,
+        //Mas agora resta implementar um que sei que vai funcionar bem:
+        //https://cantwell-tom.medium.com/flood-fill-and-line-tool-for-html-canvas-65e08e31aec6
 
         return;
     }
