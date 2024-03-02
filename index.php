@@ -119,7 +119,7 @@
 
         //Ferramenta atual
         var current_tool = "lapis";
-        const simpleDo = new SimpleDo(9, ctx.getImageData(0, 0, canvas.width, canvas.height));
+        const simpleDo = new SimpleDo(10, ctx.getImageData(0, 0, canvas.width, canvas.height));
 
         //para trocar qual é a ferramenta atual
         $(ferramentas).on("click", function (e) { current_tool = e.target.id; });

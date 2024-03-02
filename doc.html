@@ -117,6 +117,7 @@
                     <code>
                         const ferramentas = document.getElementById("ferramentas");
                         const brushSize = document.getElementById("brushSize");
+                        const acoes = document.getElementById("acoes");
                     </code>
                 </pre>
                 
@@ -124,6 +125,7 @@
                 
                 <p> A primeira constante, ferramentas é uma div que possui um série de botões que permite o usuário trocar a ferramenta atual. </p>
                 <p> A segunda se refere a um input do tipo range que é usado para manipular o tamanho do pincel, ou seja, a espessura das ferramentas .</p>
+                <p> A terceira a ações pertinentes a desfazer, refazer e limpar desenho.</p>
                 
                 
                 <h5 id="load_canvas"> Load e definição das dimensões do canvas </h5>
@@ -132,10 +134,22 @@
                         window.addEventListener("load", () => {
                             canvas.width = canvas.offsetWidth;
                             canvas.height = canvas.offsetHeight;
+                            
+                            ctx.fillStyle = "#fff"; // Define a cor de fundo como branco
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            
+                            //Inicia o deslizante Brushsize e seta os valores de ínicio
+                            brushSize.value = 5;
+                            brushSize.min = 1;
+                            brushSize.max = 100;
+                            
+                            //Seta valor de ínicio no seletor de cores
+                            document.getElementById("brushColor").value = "#000";
                         });
                     </code>
                 </pre>
-                <p> Chamada imediatamente, carrega o tamanho do canvas para que as coordenadas estarem em relação a ele mesmo e seu próprio tamanho.</p>
+                <p> Chamada imediatamente, carrega o tamanho do canvas para que as coordenadas estarem em relação a ele mesmo e seu próprio tamanho. Incluindo a cor de fundo dele quenesse caso é branca,
+                o tamanho atual, mínimo, máximo e a cor padrão do pincel.</p>
                 
                 <h5 id="dic_ferramentas"> Dicionário de ferramentas e ferramenta atual </h5>
                 <pre>
@@ -147,14 +161,18 @@
                             "retangulo_fill": new RectangleFill(),
                             "elipse": new Ellipse(),
                             "elipse_fill": new EllipseFill(),
-                            "linha": new Line()
+                            "linha": new Line(),
+                            "balde": new Bucket()
                         };
                         
                         var current_tool = "lapis";
+                        
+                        const simpleDo = new SimpleDo(10, ctx.getImageData(0, 0, canvas.width, canvas.height));
                     </code>
                 </pre>
                 <p> Aqui inicializamos todas as ferramentas que serão utilizadas pelo canvas, em seguida a variável current_tool que será usada como
                 a chave para sabermos qual ferramenta o usuário deseja usar.
+                <br> Também iniciamos o simpleDo, que é o objeto responsável por gerenciar as ações de desfazer e refazer<br>
                 Um pouco mais a frente na explicação de como as classes de ferramentas funcionam, será mostrado que todas elas possuem métodos em comum
                 que são chamados sequecialmente sem exceção. A combinação dessas duas entidades (tool e current_tool) permite que o código fique menor.
                 Pois basta sabermos para qual ferramenta estamos apontando, pois os métodos serão os mesmos. Por exemplo:</p>
@@ -180,7 +198,16 @@
                             "prevX": 0,
                             "prevY": 0,
                             
-                            "snapshot": ctx.getImageData(0, 0, canvas.width, canvas.height)
+                            "snapshot": ctx.getImageData(0, 0, canvas.width, canvas.height),
+                            
+                            "canvas_size": {
+                
+                                "width": ctx.canvas.width,
+                                "height": ctx.canvas.height
+                                
+                            },
+                            
+                            "limpo": true
                         };
                     </code>
                 </pre>
@@ -192,7 +219,8 @@
                 <p> Já as chaves prevX, prevY e snapshot serão utilizadas para as ferramentas que deslizam, como retângulo, elipse, linha.
                 O prevX e o prevY armazenam a posição inicial, ou seja, o início de onde será desenhado aquela forma. A snapshot serve para armazenar a imagem do desenho
                 no instante antes das ferramentas a pouco citadas. Ela é chamada continuamente para gerar a ilusão que a forma desenhada está deslizando seguindo o mouse pelo canvas,
-                até que o botão seja solto e a forma enfim desenhada de fato.</p>
+                até que o botão seja solto e a forma enfim desenhada de fato. Canvas width e canvas size é utilizado para passar a informação do tamanho do canvas para as ferramentas.
+                Já o "limpo" se refere a ação limpar desenho, não faz sentido limpar o desenho mais de uma vez se ele já está limpo, então isso é uma flag que indica que o desenho já está limpo.</p>
                 
                 <pre>
                     <code>
@@ -204,11 +232,51 @@
                         
                         //Para trocar a cor da ferramenta
                         $(brushColor).on("input", function () { custom["brush_color"] = $(this).val(); });
+                        
+                        //Para lidar com o desfazer, refazer e limpar desenho
+                        $(acoes).on("click", function(e) {
+            
+                            acao = e.target.id;
+                            
+                            switch (acao) {
+                                
+                                case "undo": 
+                                    simpleDo.undo(ctx);
+                                    break;
+                                    
+                                case "redo": 
+                                    simpleDo.redo(ctx);
+                                    break;
+                                    
+                                case "limpar":
+                                
+                                    //Limpar a tela é uma ação, mas só pode ser realizada uma vez (não faz sentido limpar um desenho que já foi limpo)
+                                    if (custom["limpo"]) break;
+                                    
+                                    //Do contrário realizamos a limpeza
+                                    ctx.fillStyle = "#fff"; // Define a cor de fundo como branco
+                                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                                    
+                                    simpleDo.action = true;
+                                    custom["limpo"] = true;
+                                    
+                                    simpleDo.pushAction(ctx.getImageData(0, 0, canvas.width, canvas.height));
+                                    break;
+                                    
+                                default:
+                                    break;
+                                
+                            }
+                        
+                        });
                     </code>
                 </pre>
                 
                 <p> Após a definição de todos essas constantes e variáveis adicionamos os eventos que irão escutar as interações do usuário com as seções citadas no ínicio (ferramentas, brushSize, brushColor).
-                Quando o usuário interagir com esses elementos o novo valor definido pelo usuário será salvo no dicionário custom para ser utilizado pelos objetos (ferramentas de desenho). </p>
+                Quando o usuário interagir com esses elementos o novo valor definido pelo usuário será salvo no dicionário custom para ser utilizado pelos objetos (ferramentas de desenho). <br>
+                No caso das ações desfazer e refazer, simplesmente chamamos os métodos do objeto simpleDo.<br>
+                Já no limpar, verificams primeiramente se o desenho já está limpo, se já estiver, não precisamos limpar novamente. Do contrário limpamos o desenho e consideramos aquilo uma nova ação,
+                setamos a flag de limpo como limpo, e damos um push daquela ação no stack de ações do objeto simpleDo.</p>
                 
                 <h4 id="eventos_canvas"> Eventos no canvas </h4>
                 <h5 id="inic_desenho"> Desenho (mousedown) </h5>
@@ -223,12 +291,18 @@
             
                             custom["snapshot"] = ctx.getImageData(0, 0, canvas.width, canvas.height);
                             custom["prevX"] = e.offsetX; 
-                            custom["prevY"] = e.offsetY; 
+                            custom["prevY"] = e.offsetY;
+                            
+                            simpleDo.action = true;
+                            custom["limpo"] = false;
+                            
                             ctx.beginPath(); 
                     </code>
                 </pre>
                 <p> Quando o usuário realizar um clique com o botão esquerdo no canvas a ferramenta atual selecionada deve ser inicializada, ou seja, os parãmetros necessaŕios do dicionário custom serão aproveitados 
-                por aquela ferramenta, como o tamanho do lápis, a cor, e etc...</p>
+                por aquela ferramenta, como o tamanho do lápis, a cor, e etc...<br>
+                O simpleDo.action é setado para true para indicar que o usuário de fato clicou no desenho, realizou uma ação. E se ele realizou uma nova ação com as ferramentas, o canvas não está mais limpo,
+                então custom["limpo"] é setado para false</p>
                 <p> Este processo ocorre no método setup, e recebe o dicionário custom como parâmetro. </p>
                 <p> Seguidamente chamamos o método iniciar. Esse método aplica as mudanças de cor, tamanho do lápis, tipo de borda de linha e etc... Ao canvas, ou seja, a partir desse momento, o canvas será
                 desenhado utilizando as configurações específicas daquela ferramenta, também aplica um ponto único no caso de algumas ferramentas. </p>
@@ -256,6 +330,7 @@
                     <code>
                         $(canvas).on('mouseup mouseleave', function(e) {
                             $(canvas).off('mousemove');
+                            simpleDo.pushAction(ctx.getImageData(0, 0, canvas.width, canvas.height));
                         });
                     </code>
                 </pre>
@@ -263,6 +338,9 @@
                 estiver pressionado em cima do canvas.</p>
                 <p> Também é ocorre se o mouse deixar o canvas, devido ao
                  'mouseleave'.</p>
+                <p> Como isso indica um encerramento de aplicação da ferramenta, empurramos aquele novo estado do canvas para o stack do simpleDo. Acumulando o que foi feito no canvas para fazer e refazer.
+                O atributo simpleDo.action é o responsável de garantir que quando o usuário simplesmente passe o mouse em cima do mouse e retire, dando um trigger nesse evento aquele novo estado, em
+                que nada foi modificado no canvas, não seja adicionado ao stack do simpleDo.</p>
             </div>
             
             
@@ -911,6 +989,166 @@
             <div class="section" id="acoes">
                 
                 <h3>Ações (Desfazer, Refazer e Limpar Desenho)</h3>
+                
+                <h4> SimpleDo </h4>
+                
+                <p> SimpleDo é uma classe que gerencia as duas ações principais no desenho: Desfazer (undo) e Refazer (redo). A classe fica armazenada no documento actions.js e é chamada no documento html.
+                Funciona a partir de armazenamento da imagem, estado do canvas a cada clique nele que o usuário realizar. Essa imagens ficam armazenadas em um stack, a qual retornar vai andando para a esquerda
+                puxando as imagens (ações) mais antigas, e se andar para direita as mais novas. Isso tudo com um limite, se o stack atingir o limite máximo de tamanho definido, o estado mais
+                antigo é removido e o mais novo é inserido naturalmente.</p>
+                
+                <pre>
+                    <code>
+                        class SimpleDo {
+                            //Classe abstrata para Redo e Undo, mas só permite um voltar e um avançar
+                            
+                            //Imagina fazer uma ferramenta de voltar e ir que desse para eu navegar pelas várias partes do desenho, e ir apagando o que eu fiz?
+                            //Tipo uma árvorem em que os novos galhos são retornos a uma posição original, na qual uma nova ação diferente é feita, e gera uma ramificação
+                            
+                            
+                            constructor(maxsize, canvasState) {
+                                
+                                this.maxsize = maxsize - 1; //Tamanho máximo do stack
+                                this.stack = [canvasState];
+                                
+                                this.stackPos = 0; //Onde estou no stack, inicialmente se refere ao tamanho zero
+                                this.action = false;
+                            }
+                            
+                            
+                            
+                            
+                            
+                            undo (ctx) { //Conforme vou clicando eu vou voltando
+                                
+                                this.stackPos -= 1; //Quando eu clicar, vou avaliar se estou indo para uma posição válida no stack
+                                
+                                if (this.stackPos >= 0) {
+                                   
+                                   ctx.putImageData(this.stack[this.stackPos], 0, 0);
+                                   //Habilito a função refazer de novo
+                                    
+                                }
+                                else {
+                                    
+                                    this.stackPos += 1; //Se não der certo, eu retorno para a posição que estava antes
+                                    //return false; //E o botão Desfazer fica desabilitado
+                                
+                                }
+                                
+                            }
+                            
+                            
+                            
+                            
+                            
+                            
+                            redo (ctx) {
+                                
+                                this.stackPos += 1; //Quando eu clicar, vou avaliar se estou indo para uma posição válida no stack
+                                
+                                if (this.stackPos &lt; this.stack.length) {
+                                   
+                                   ctx.putImageData(this.stack[this.stackPos], 0, 0);
+                                   //Habilito a função desfazer de novo
+                                    
+                                }
+                                else {
+                                    
+                                    this.stackPos -= 1; //Se não der certo, eu retorno para a posição que estava antes
+                                    //return false; //E o botão Refazer fica desabilitado
+                                
+                                }
+                                
+                            }
+                            
+                            
+                            
+                            
+                            
+                            
+                            
+                            pushAction (canvasState) { //Uma ação foi feita no canvas
+                                
+                                if (!this.action) return;
+                                //O mais um é pq o splice começa remover incluindo a própria posição
+                                this.stack.splice(this.stackPos + 1); //Isso aqui tem que vir primeiro, pois podemos estar iniciando uma nova ação do meio do stack, então removeremos as ações anteriores a partir dali
+                                //Para que a útima seja mesmo a última que fizemos
+                                
+                                //Se o stack atingir o tamanho máximo, eu apago a ação mais antiga
+                                if (this.stack.length > this.maxsize) this.stack.shift();
+                                
+                                //Coloco a ação mais nova
+                                this.stack.push(canvasState);
+                                
+                                //Removo o resto do array se tiver, a partir da posição onde estou
+                                
+                                //Vou me movimentando junto com o array, mas não extrapolo o limite
+                                if(this.stackPos &lt; this.maxsize) this.stackPos += 1;
+                                
+                                this.action = false; //Retorna a variável para false, para esperar um clique no canvas para que seja true de novo.
+                                
+                            }
+                            
+                        }
+                    </code>
+                </pre>
+                
+                
+                <ul>
+                    <li>constructor(maxsize, canvasState)
+                        <ul>
+                            <li>this.maxsize = maxsize; -> Define o tamanho do stack, ou seja, se for 10, a posição máxima será 9 (0-9) são 10 inserções possíveis.</li>
+                            <li>this.stack = [canvasState]; -> Inicialmente a primeira ação é o canvas vazio, qualquer ação adicionada depois daquela quando clicar voltar, pode retornar ao canvas vazio.</li>
+                            <li>this.stackPos = 0; -> Posição inicial no stack, começamos na posição 0</li>
+                            <li>this.action = false; -> Nada foi feito ainda. Inicialmente o usuário não desenhou nada. Essa variável é importante para saber quando o usuário realmente clicou para desenhar,
+                            ou simplesmente colocou o mouse em cima do canvas e removeu. </li>
+                        </ul>
+                    </li>
+                    
+                    <br>
+                    
+                    <li>undo(ctx) -> recebemos o ctx para colocar os estados armazenados no canvas
+                        <ul>
+                            <li>this.stackPos -= 1; -> Retornamos uma posição no stack</li>
+                            <li>if (this.stackPos >= 0) -> Se a posição não for menor que 0, significa que é um estado válido.</li>
+                            <li>ctx.putImageData(this.stack[this.stackPos], 0, 0); -> Então recupero aquele estado e desenho no ctx, canvas.</li>
+                            <br>
+                            <li>DO CONTRÁRIO: this.stackPos += 1; -> A posição era menor que zero, inválida, e retornamos para a posição original.</li>
+                        </ul>
+                    </li>
+                    
+                    <br>
+                    
+                    <li>redo(ctx) -> recebemos o ctx para colocar os estados armazenados no canvas
+                        <ul>
+                            <li>this.stackPos += 1; -> Avançamos uma posição no stack</li>
+                            <li>if (this.stackPos &lt; this.stack.length) -> Se a posição for menor que o tamanho do canvas (se está pelo menos até a posição máxima) </li>
+                            <li>ctx.putImageData(this.stack[this.stackPos], 0, 0); -> Então recupero aquele estado e desenho no ctx, canvas.</li>
+                            <br>
+                            <li>DO CONTRÁRIO: this.stackPos -= 1; -> A posição era maior do que possível, inválida, e retornamos para a posição original.</li>
+                        </ul>
+                    </li>
+                    
+                    <br>
+                    
+                    <li>pushAction(canvasState) -> Empurra os estados, as novas ações dentro do stack (sempre na última posição)
+                        <ul>
+                            <li>if (!this.action) return; -> Se não houve ação de desenho no canvas, o método retorna e não faz nada. Existe devido a maneira que se manipula os eventos de desenho no canvas
+                            de maneira assíncrona com o jQuery.</li><br>
+                            <li>this.stack.splice(this.stackPos + 1); -> Vamos supor que retornamos algumas ações no stack, e fizemos uma nova ação no meio do stack. Todo o resto do stack (à direita)
+                            não faz sentido mais ser recuperado e é descartado. Se estivermos na última posição do stack, que corresponde ao tamanho dele - 1, essa ação não faz nada.
+                            Pois não tem o quê ser removido a direita.</li><br>
+                            <li>if (this.stack.length > this.maxsize) this.stack.shift(); -> Se o tamanho máximo do stack for extrapolado, então removemos a ação mais antiga e colocamos a nova.</li><br>
+                            <li>if(this.stackPos &lt; this.maxsize) this.stackPos += 1; -> Nossa ação atual cresce conforme o array também cresce, assim a mais nova ação corresponde a nossa posição atual
+                            enquanto não chamarmos o undo e redo.</li><br>
+                            <li>this.action = false; -> A ação foi concluída e retornamos essa variável para o padrão. Para tornar true novamente o usuário deve de fato clicar no canvas aplicando uma ferramenta
+                            (limpar o desenho mais de uma vez não conta).</li>
+                        </ul>
+                    </li>
+                
+                
+                </ul>
                 
                 
             

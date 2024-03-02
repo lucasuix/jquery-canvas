@@ -7,7 +7,7 @@ class SimpleDo {
     
     constructor(maxsize, canvasState) {
         
-        this.maxsize = maxsize; //Tamanho máximo do stack
+        this.maxsize = maxsize - 1; //Tamanho máximo do stack
         this.stack = [canvasState];
         
         this.stackPos = 0; //Onde estou no stack, inicialmente se refere ao tamanho zero
@@ -31,7 +31,6 @@ class SimpleDo {
         else {
             
             this.stackPos += 1; //Se não der certo, eu retorno para a posição que estava antes
-            //return false; //E o botão Desfazer fica desabilitado
         
         }
         
@@ -55,7 +54,6 @@ class SimpleDo {
         else {
             
             this.stackPos -= 1; //Se não der certo, eu retorno para a posição que estava antes
-            //return false; //E o botão Refazer fica desabilitado
         
         }
         
@@ -80,7 +78,6 @@ class SimpleDo {
         //Coloco a ação mais nova
         this.stack.push(canvasState);
         
-        //Removo o resto do array se tiver, a partir da posição onde estou
         
         //Vou me movimentando junto com o array, mas não extrapolo o limite
         if(this.stackPos < this.maxsize) this.stackPos += 1;
