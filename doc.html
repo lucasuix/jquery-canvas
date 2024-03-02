@@ -84,10 +84,13 @@
                                             <li><a href="#line"> Linha </a></li>
                                         </ul>
                                     </li>
+                                    <li><a href="#bucket"> Balde de Preenchimento </a></li>
                                 </ul>
                             </li>
                         </ul>
                     </li>
+                    
+                    <li><a href="#acoes"> Ações (Desfazer, Refazer e Limpar Desenho)</a></li>
                     
                 </ol>
             </div>
@@ -289,6 +292,7 @@
                                     <li><a href="#line"> Linha </a></li>
                                 </ul>
                             </li>
+                            <li><a href="#bucket"> Balde de Preenchimento </a></li>
                         </ul>
                     </li>
                 </ul>
@@ -703,6 +707,213 @@
                     </li>
                 </ul>
                 
+                
+                <h4 id="bucket">Balde de Preenchimento </h4>
+                
+                <pre>
+                    <code>
+                        
+                        class Bucket extends Tool {
+
+                            //A RESOLUÇÃO 1080 E 720 ESTÁ HARD 'CODADA' NA FUNÇÃO DO WILLIAM MALONE
+                            
+                            setup(custom) {
+                                this.brush_size = 1; // O tamanho da ferramenta é sempre um pixel independente do que aconteça
+                                this.brush_color = custom["brush_color"];
+                                this.canvas_size = custom["canvas_size"];
+                            }
+                            
+                            hexToRgb(hex) {
+                                // Remover "#" se presente
+                                hex = hex.replace(/^#/, '');
+
+                                // Converter para valores de cor RGB
+                                var bigint = parseInt(hex, 16);
+                                var r = (bigint >> 16) &amp; 255;
+                                var g = (bigint >> 8) &amp; 255;
+                                var b = bigint &amp; 255;
+
+                                // Retornar valores de cor RGB
+                                return { r: r, g: g, b: b };
+                            }
+                            
+
+                            matchStartColor(pixelPos) {
+                                let r = this.colorLayer.data[pixelPos];
+                                let g = this.colorLayer.data[pixelPos + 1];
+                                let b = this.colorLayer.data[pixelPos + 2];
+                                return r === this.startR &amp;&amp; g === this.startG &amp;&amp; b === this.startB;
+                            }
+
+                            colorPixel(pixelPos, selected_color) {
+                                this.colorLayer.data[pixelPos] = selected_color.r;
+                                this.colorLayer.data[pixelPos + 1] = selected_color.g;
+                                this.colorLayer.data[pixelPos + 2] = selected_color.b;
+                                this.colorLayer.data[pixelPos + 3] = 255;
+                            }
+
+                            //William Malone Algorithm
+                            floodFill(startX, startY, selected_color, ctx,
+                                newPos, x, y, pixelPos, reachLeft, reachRight) {
+
+                                    newPos = this.pixelStack.pop();
+                                    x = newPos[0];
+                                    y = newPos[1];
+                                    //get current pixel position
+                                    pixelPos = (y * 1080 + x) * 4;
+                                    // Go up as long as the color matches and are inside the canvas
+                                    while (y >= 0 &amp;&amp; this.matchStartColor(pixelPos, selected_color)) {
+                                      y--;
+                                      pixelPos -= 1080 * 4;
+                                    }
+                                    //Don't overextend
+                                    pixelPos += 1080 * 4;
+                                    y++;
+                                    reachLeft = false;
+                                    reachRight = false;
+                                    // Go down as long as the color matches and in inside the canvas
+                                    while (y &lt; 720 &amp;&amp; this.matchStartColor(pixelPos, selected_color)) {
+                                      this.colorPixel(pixelPos, selected_color);
+                                      if (x > 0) {
+                                        if (this.matchStartColor(pixelPos - 4, selected_color)) {
+                                          if (!reachLeft) {
+                                            //Add pixel to stack
+                                            this.pixelStack.push([x - 1, y]);
+                                            reachLeft = true;
+                                          }
+                                        } else if (reachLeft) {
+                                          reachLeft = false;
+                                        }
+                                      }
+                                      if (x &lt; 1080 - 1) {
+                                        if (this.matchStartColor(pixelPos + 4, selected_color)) {
+                                          if (!reachRight) {
+                                            //Add pixel to stack
+                                            this.pixelStack.push([x + 1, y]);
+                                            reachRight = true;
+                                          }
+                                        } else if (reachRight) {
+                                          reachRight = false;
+                                        }
+                                      }
+                                      y++;
+                                      pixelPos += 1080 * 4;
+                                    }
+                                    //recursive until no more pixels to change
+                                    if (this.pixelStack.length) {
+                                      this.floodFill(startX, startY, selected_color, ctx,
+                                        newPos, x, y, pixelPos, reachLeft, reachRight);
+                                    }
+                            }
+
+                            actionFill(startX, startY, selected_color, ctx) {
+
+                                this.colorLayer = ctx.getImageData(
+                                    0,
+                                    0,
+                                    1080,
+                                    720
+                                );
+
+                                let startPos = (startY * 1080 + startX) * 4;
+
+                                //Acredito que pega a cor específica
+                                this.startR = this.colorLayer.data[startPos];
+                                this.startG = this.colorLayer.data[startPos + 1];
+                                this.startB = this.colorLayer.data[startPos + 2];
+
+                                if (selected_color.r === this.startR &amp;&amp;
+                                    selected_color.g === this.startG &amp;&amp;
+                                    selected_color.b === this.startB) return;
+
+                                this.pixelStack = [[startX,startY]];
+                                let newPos, x, y, pixelPos, reachLeft, reachRight;
+
+                                this.floodFill(startX, startY, selected_color, ctx,
+                                                newPos, x, y, pixelPos, reachLeft, reachRight);
+                                
+                                ctx.putImageData(this.colorLayer, 0, 0);
+                                
+
+                            }
+                          
+                                
+                            // Aqui de fato é onde a mágica acontece, a aplicação da ferramenta em um clique único
+                            iniciar(ctx, e) {
+
+                                let selected_color = this.hexToRgb(this.brush_color); //Cor selecionada mas em formato RGB
+                                this.actionFill(e.offsetX, e.offsetY, selected_color, ctx);
+                                
+                                
+                            }
+                            
+                            aplicar(ctx, e) { return; }
+                            
+                        }
+                        
+                    </code>
+                </pre>
+                
+                
+                <p> Ao contrário das outras ferramentas vamos analisar esta seguindo a ordem lógica que seria aplicada no código. </p>
+                
+                <ul>
+                    <li>setup(custom)
+                        <ul>
+                            <li>Simplesmente recuperamos dados que serão úteis durante a aplicação do algoritmo de flood Fill.</li>
+                        </ul>
+                    </li>
+                    <br>
+                    
+                    <li> iniciar(ctx)
+                        <ul>
+                            <li>let selected_color = this.hexToRgb(this.brush_color); -> Convertemos a cor selecionada para o padrão rgb, pois isso tornará menos custoso a comparação de cores, e também é mais compatível
+                            com o algoritmo de preenchimento que será utilizado.</li>
+                            <li>this.actionFill(e.offsetX, e.offsetY, selected_color, ctx); -> Chamamos o método que iniciará todo o processo de preenchimento, inicializará as variáveis necessárias.</li>
+                        </ul>
+                    </li>
+                    <br>
+                    
+                    <li>actionFill(startX, startY, selected_color, ctx)
+                        <ul>
+                            <li>this.colorLayer = ctx.getImageData[...] -> Recebe a imagem atual do canvas</li>
+                            <li> let startPos = (startY * 1080 + startX) * 4; -> Calcula a posição de onde está aquele pixel específico no array da colorLayer. </li>
+                            <li>this.startR = this.colorLayer.data[startPos];<br>
+                                this.startG = this.colorLayer.data[startPos + 1];<br>
+                                this.startB = this.colorLayer.data[startPos + 2];<br><br>
+                                -> Valores que serão utilizados para comparar com os pixels posteriormente </li>
+                            <li>if (selected_color.r === this.startR &amp;&amp;[...]) -> Verifica se o pixel clicado já tem a mesma cor que a cor selecionada no pincel, nesse caso não há nada a ser feito.</li>
+                            <li>this.pixelStack = [[startX,startY]];<br>
+                                let newPos, x, y, pixelPos, reachLeft, reachRight; -> Inicia o stack de pixels que será utilizado no algoritmo e outras variáveis pertinentes.</li>
+                            <li>this.floodFill(startX, startY, selected_color, ctx,
+                                                newPos, x, y, pixelPos, reachLeft, reachRight); -> Chamamos o algoritmo que aplicará o preenchimento recursivamente. </li>
+                            <li>ctx.putImageData(this.colorLayer, 0, 0); -> Aplicamos ao nosso canvas a nova layer com o preenchimento concluído.</li>
+                        </ul>
+                    </li>
+                    <br>
+                    
+                    <li>floodFill(startX, startY, selected_color, ctx,
+                                newPos, x, y, pixelPos, reachLeft, reachRight) {[...]}<br>
+                        -> Esse incrível algoritmo foi escrito por William Malone. Os detalhes do seu funcionamento estão no repositório <a href="https://github.com/williammalone/HTML5-Paint-Bucket-Tool"> github/williammalone/HTML5-Paint-Bucket-Tool </a> .
+                    </li>
+                    
+                    <br>
+                    
+                    <li>matchStartColor(pixelPos) -> Verifica se as cores dos pixels são iguais.</li>
+                    <li>colorPixel(pixelPos, selected_color) -> Preenche um pixel com a cor selecionada.</li>
+                
+                </ul>
+                
+                
+            </div>
+            
+            
+            <div class="section" id="acoes">
+                
+                <h3>Ações (Desfazer, Refazer e Limpar Desenho)</h3>
+                
+                
+            
             </div>
             
 

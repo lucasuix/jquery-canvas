@@ -6,6 +6,7 @@
     <title>Document</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="./tools.js"></script>
+    <script src="./actions.js"></script>
     <style>
         body {
             background-color: black;
@@ -37,6 +38,8 @@
         <button id="elipse_fill"> Elipse Cheia </button>
         <button id="linha"> Linha </button>
         <button id="balde"> Balde </button>
+    </div>
+    <div id="acoes">
         <button id="undo"> Desfazer </button>
         <button id="redo"> Refazer </button>
         <button id="limpar"> Limpar Desenho </button>
@@ -55,6 +58,7 @@
 
         const ferramentas = document.getElementById("ferramentas");
         const brushSize = document.getElementById("brushSize");
+        const acoes = document.getElementById("acoes");
 
         //Evento que ocorre no carregamento da página
         
@@ -104,11 +108,18 @@
                 "width": ctx.canvas.width,
                 "height": ctx.canvas.height
                 
-            }
+            },
+            
+            "limpo": true
         };
+        
+        
+        //$("#redo").prop('disabled', false); //Ativo função avançar
+        //$("#undo").prop('disabled', true); //Desativo função voltar
 
         //Ferramenta atual
         var current_tool = "lapis";
+        const simpleDo = new SimpleDo(9, ctx.getImageData(0, 0, canvas.width, canvas.height));
 
         //para trocar qual é a ferramenta atual
         $(ferramentas).on("click", function (e) { current_tool = e.target.id; });
@@ -118,7 +129,42 @@
         
         //Para trocar a cor da ferramenta
         $(brushColor).on("input", function () { custom["brush_color"] = $(this).val(); });
-
+        
+        $(acoes).on("click", function(e) {
+            
+            acao = e.target.id;
+            
+            switch (acao) {
+                
+                case "undo": 
+                    simpleDo.undo(ctx);
+                    break;
+                    
+                case "redo": 
+                    simpleDo.redo(ctx);
+                    break;
+                    
+                case "limpar":
+                
+                    //Limpar a tela é uma ação, mas só pode ser realizada uma vez (não faz sentido limpar um desenho que já foi limpo)
+                    if (custom["limpo"]) break;
+                    
+                    //Do contrário realizamos a limpeza
+                    ctx.fillStyle = "#fff"; // Define a cor de fundo como branco
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    simpleDo.action = true;
+                    custom["limpo"] = true;
+                    
+                    simpleDo.pushAction(ctx.getImageData(0, 0, canvas.width, canvas.height));
+                    break;
+                    
+                default:
+                    break;
+                
+            }
+        
+        });
 
         //Evento que escuta quando o mouse é pressionado para baixo no canvas
         $(canvas).on('mousedown', function(e) {
@@ -126,22 +172,27 @@
             //Snapshot para criar efeito de deslize se necessário
             custom["snapshot"] = ctx.getImageData(0, 0, canvas.width, canvas.height);
             
+            //Dizer ao simpleDo que realmente algo foi feito no desenho
+            //Evitar que algo seja adicionado ao stack, sem um clique ter ocorrido na tela
+            simpleDo.action = true;
+            custom["limpo"] = false; //Se algo foi feito no canvas, então o desenho não está mais limpo
+            
             //Ponto inicial
             custom["prevX"] = e.offsetX;
             custom["prevY"] = e.offsetY;
             
             ctx.beginPath(); //Posição inicial do mouse é o ínicio do trajeto
             
-            
             tools[current_tool].setup(custom); //Preferências passadas pela ferramenta
             tools[current_tool].iniciar(ctx, e); //Preferências e funcionamento da ferramenta passado para o canvas 
 
             // Aplica a ferramenta no canvas
             $(canvas).on('mousemove', function(e) { tools[current_tool].aplicar(ctx, e); });
+            
         });
 
         
-        $(canvas).on('mouseup mouseleave', function(e) { $(canvas).off('mousemove'); });
+        $(canvas).on('mouseup mouseleave', function(e) { $(canvas).off('mousemove'); simpleDo.pushAction(ctx.getImageData(0, 0, canvas.width, canvas.height)); });
 
 
 
