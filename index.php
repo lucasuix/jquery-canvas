@@ -16,6 +16,10 @@
             display: block;
             margin: auto;
         }
+        
+        #brushSize {
+            width: 200px;
+        }
     </style>
 </head>
 <body>
@@ -39,8 +43,8 @@
     </div>
 
     <div id="custom">
-        <input type="range" id="brushSize" min="1" max="100" value="1">
-        <input type="color" id="brushColor" value="#000">
+        <input type="range" id="brushSize">
+        <input type="color" id="brushColor">
     </div>
     
     <script>
@@ -52,6 +56,8 @@
         const ferramentas = document.getElementById("ferramentas");
         const brushSize = document.getElementById("brushSize");
 
+        //Evento que ocorre no carregamento da página
+        
         window.addEventListener("load", () => {
             //Seta o tamanho do canvas em relação a ele mesmo
             canvas.width = canvas.offsetWidth;
@@ -59,6 +65,14 @@
             
             ctx.fillStyle = "#fff"; // Define a cor de fundo como branco
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            //Inicia o deslizante Brushsize e seta os valores de ínicio
+            brushSize.value = 5;
+            brushSize.min = 1;
+            brushSize.max = 100;
+            
+            //Seta valor de ínicio no seletor de cores
+            document.getElementById("brushColor").value = "#000";
         });
         
 
@@ -76,7 +90,7 @@
 
         const custom = {
             //Dados gerais
-            "brush_size": 1,
+            "brush_size": 5,
             "brush_color": "#000",
             
             //Dados para ferramentas: Retângulo, Linha, Círculo
