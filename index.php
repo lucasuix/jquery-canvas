@@ -40,7 +40,7 @@
 
     <div id="custom">
         <input type="range" id="brushSize" min="1" max="100" value="1">
-        <input type="color" id="brushColor">
+        <input type="color" id="brushColor" value="#000">
     </div>
     
     <script>
@@ -48,9 +48,6 @@
         ctx = canvas.getContext("2d");
         ctx.imageSmoothingEnabled = false;
         ctx.willReadFrequently = true;
-        
-        ctx.fillStyle = "#FFFFFF"; // Define a cor como branco
-        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
         const ferramentas = document.getElementById("ferramentas");
         const brushSize = document.getElementById("brushSize");
@@ -59,7 +56,11 @@
             //Seta o tamanho do canvas em relação a ele mesmo
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
+            
+            ctx.fillStyle = "#fff"; // Define a cor de fundo como branco
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
         });
+        
 
         //ferramentas
         const tools = {
