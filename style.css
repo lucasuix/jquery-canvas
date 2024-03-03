@@ -1,0 +1,47 @@
+body {
+    
+    
+    background-color: #48005e;
+}
+
+canvas {
+            
+    background-color: white;
+    display: block;
+    margin: auto;
+}
+
+.canvasholder {
+    background-color: #3a024f;
+    padding: 20px;
+}
+        
+#brushSize {
+    
+    width: 200px;
+}
+
+#ferramentas, #acoes, #custom {
+
+    display: flex;
+    justify-content: space-evenly;
+
+    max-width: 1080px;
+    margin: 15px auto;
+    width: 100%; 
+}
+
+button {
+
+    color: #996402;
+    background-color: yellow;
+    
+    border: 3px solid #c95700;
+    font-size: 17px;
+    font-weight: bold;
+    
+    border-radius: 5px;
+    cursor: pointer;
+
+
+}
