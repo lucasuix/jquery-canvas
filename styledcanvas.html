@@ -12,31 +12,62 @@
 <body>
 
     <div class="canvasholder">
+        <div id="workbench">
+            
+            <div id="ferramentas">
+            <button id="lapis" class="tool">
+                <object class="button-svg" type="image/svg+xml" data="./src/tools/pencil.svg" width="40" height="40"></object>
+            </button>
+            <button id="borracha" class="tool">
+                <object class="button-svg" type="image/svg+xml" data="./src/tools/eraser2.svg" width="40" height="40"></object>
+            </button>
+            <button id="retangulo" class="tool">
+                <object class="button-svg" type="image/svg+xml" data="./src/tools/square.svg" width="40" height="40"></object>
+            </button>
+            <button id="retangulo_fill" class="tool">
+                <object class="button-svg" type="image/svg+xml" data="./src/tools/square_filled.svg" width="40" height="40"></object>
+            </button>
+            <button id="elipse" class="tool">
+                <object class="button-svg" type="image/svg+xml" data="./src/tools/elipse.svg" width="40" height="40"></object>
+            </button>
+            <button id="elipse_fill" class="tool">
+                <object class="button-svg" type="image/svg+xml" data="./src/tools/elipse_filled.svg" width="40" height="40"></object>
+            </button>
+            <button id="linha" class="tool">
+                <object class="button-svg" type="image/svg+xml" data="./src/tools/line.svg" width="40" height="40"></object>
+            </button>
+            <button id="balde" class="tool">
+                <object class="button-svg" type="image/svg+xml" data="./src/tools/bucket2.svg" width="40" height="40"></object>
+            </button>
+            </div>
+        
+            <div id="acoes">
+                <button id="undo" class="action">
+                    <object class="button-svg" type="image/svg+xml" data="./src/actions/undo.svg" width="40" height="40"></object>
+                </button>
+                <button id="redo" class="action">
+                    <object class="button-svg" type="image/svg+xml" data="./src/actions/redo.svg" width="40" height="40"></object>
+                </button>
+                <button id="limpar" class="action"> Limpar Desenho </button>
+            </div>
+            
+            <div id="sizebench">
+                <input type="range" id="brushSize">
+                <svg width="100" height="100">
+                    <circle id="circle_brushSize"cx="50" cy="50" r="2.5" fill="white" />
+                </svg>
+            </div>
+            
+            <div id="colorbench">
+                <input type="color" id="brushColor">
+            </div>
+            
+        </div>
+        
         <canvas id="canvas" width="1080px" height="720px">
         </canvas>
     </div>
 
-    <!-- Opções de formas -->
-    <div id="ferramentas">
-        <button id="lapis"> Lapis </button>
-        <button id="borracha"> Borracha </button>
-        <button id="retangulo"> Retangulo </button>
-        <button id="retangulo_fill"> Retangulo Cheio </button>
-        <button id="elipse"> Elipse </button>
-        <button id="elipse_fill"> Elipse Cheia </button>
-        <button id="linha"> Linha </button>
-        <button id="balde"> Balde </button>
-    </div>
-    <div id="acoes">
-        <button id="undo"> Desfazer </button>
-        <button id="redo"> Refazer </button>
-        <button id="limpar"> Limpar Desenho </button>
-    </div>
-
-    <div id="custom">
-        <input type="range" id="brushSize">
-        <input type="color" id="brushColor">
-    </div>
     
     <script>
         const canvas = document.querySelector("canvas");
@@ -65,6 +96,9 @@
             
             //Seta valor de ínicio no seletor de cores
             document.getElementById("brushColor").value = "#000";
+            
+            //Coloca o estilo do botao da ferramenta do lápis como selecionada por padrão
+            document.getElementById("lapis").classList.add("clicked");
         });
         
 
@@ -110,10 +144,28 @@
         const simpleDo = new SimpleDo(10, ctx.getImageData(0, 0, canvas.width, canvas.height));
 
         //para trocar qual é a ferramenta atual
-        $(ferramentas).on("click", function (e) { current_tool = e.target.id; });
+        $(ferramentas).on("click", function (e) {
+            
+            //Removo o estilo selecionado do botao da ferramenta antiga
+            document.getElementById(current_tool).classList.remove("clicked");
+            current_tool = e.target.id;
+            
+            //Adiciono o estilo selecionado do botao da nova ferramenta
+            document.getElementById(current_tool).classList.add("clicked");
+        
+        });
 
         //Para trocar o tamanho da ferramenta
-        $(brushSize).on("input", function () { custom["brush_size"] = $(this).val(); });
+        $(brushSize).on("input", function () {
+            
+            //Seta no custom
+            custom["brush_size"] = $(this).val(); 
+            
+            //Arruma o círculo para o usuário saber qual o tamanho do lápis corretamente
+            const circle_brushSize = document.getElementById("circle_brushSize");
+            circle_brushSize.setAttribute('r', custom["brush_size"] * 0.5);
+        
+        });
         
         //Para trocar a cor da ferramenta
         $(brushColor).on("input", function () { custom["brush_color"] = $(this).val(); });
