@@ -138,6 +138,11 @@
                             ctx.fillStyle = "#fff"; // Define a cor de fundo como branco
                             ctx.fillRect(0, 0, canvas.width, canvas.height);
                             
+                            //Resolve o problema da ferramenta balde não funcionar após um traço e undo para o canvas no estado de ínicio
+                            custom["snapshot"] = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                            simpleDo.stack.shift();
+                            simpleDo.stack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+                            
                             //Inicia o deslizante Brushsize e seta os valores de ínicio
                             brushSize.value = 5;
                             brushSize.min = 1;
@@ -149,7 +154,7 @@
                     </code>
                 </pre>
                 <p> Chamada imediatamente, carrega o tamanho do canvas para que as coordenadas estarem em relação a ele mesmo e seu próprio tamanho. Incluindo a cor de fundo dele quenesse caso é branca,
-                o tamanho atual, mínimo, máximo e a cor padrão do pincel.</p>
+                o tamanho atual, mínimo, máximo e a cor padrão do pincel. O custom["snapshot"] e o stack do simpleDo recebem a primeira imagem do canvas (o canvas em branco).</p>
                 
                 <h5 id="dic_ferramentas"> Dicionário de ferramentas e ferramenta atual </h5>
                 <pre>
