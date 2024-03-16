@@ -22,7 +22,7 @@ OOP is the core of this project, aiming to achieve the best abstraction of each 
 
 The documentation for each tool, the procedural process, and the purpose of each event listener are thoroughly documented:
 
-- ([Documentação PT-BR](https://jquery-drawing-canvas.neocites.org/docpt-br.html))
+- ([Documentação PT-BR](https://jquery-drawing-canvas.neocities.org/docpt-br.html))
 
 ## License
 
