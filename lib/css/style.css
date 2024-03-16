@@ -50,18 +50,10 @@ canvas {
 
 }
 
-#brushSize {
-        writing-mode: bt-lr; /* Para a orientação vertical */
-        -webkit-appearance: slider-vertical; /* Para navegadores WebKit */
-        width: 20px; /* Largura do controle */
-        height: 200px; /* Altura do controle */
-        margin: 10px;
-}
-
 #sizebench {
     
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     
     justify-content: center;
     align-items: center;
@@ -152,3 +144,4 @@ canvas {
     margin-top: 3px;
     pointer-events: none;
 }
+
