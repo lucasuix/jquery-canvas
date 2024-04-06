@@ -1,10 +1,27 @@
-body {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-color: #4a4a4a;
-    /*#48005e -> Roxo mais claro*/
+#brushColor {
+    width: 55px; /* Largura do seletor de cores */
+    height: 55px; /* Altura do seletor de cores */
+    border: none; /* Removendo a borda padrão do seletor */
+    border-radius: 40%; /* Deixando-o redondo */
+    cursor: pointer; /* Alterando o cursor ao passar por cima */
+    -webkit-appearance: none; /* Removendo o estilo padrão do WebKit */
+  }
+  
+  #brushColor::-webkit-color-swatch-wrapper {
+    padding: 0; /* Removendo o preenchimento */
+  }
+  
+  #brushColor::-webkit-color-swatch {
+    border: none; /* Removendo a borda do seletor */
+    border-radius: 40%; /* Deixando-o redondo */
+  }
+
+
+.button-svg {
+    width: 30px;
+    height: 30px;
+    margin-top: 3px;
+    pointer-events: none;
 }
 
 canvas {
@@ -18,74 +35,6 @@ canvas {
     min-height: 720px;
 }
 
-.canvasholder {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    background-color: #2e2e2e;
-    /*#3a024f -> Roxo mais escuro*/
-    padding: 20px;
-    max-width: 1280px;
-    border-radius: 3px;
-}
-
-#ferramentas, #acoes {
-    
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    
-    height: 100%;
-    max-width: 120px;
-    margin: 10px 15px;
-}
-
-#workbench {
-
-    display: flex;
-    flex-direction: column;
-    
-    height: 100%;
-    max-width: 200px;
-
-}
-
-#sizebench {
-    
-    display: flex;
-    flex-direction: column;
-    
-    justify-content: center;
-    align-items: center;
-
-
-}
-
-#colorbench {
-
-    display: flex;
-    flex-wrap:wrap;
-    justify-content: center;
-    align-items: center;
-
-}
-
-.tool, .action {
-
-    color: #996402;
-    background-color: yellow;
-    border: 3px solid #c95700;
-    border-radius: 5px;
-    cursor: pointer;
-    
-    font-size: 14px;
-    font-weight: bold;
-
-    margin: 5px;
-
-}
-
-
 .tool.clicked {
 
     background-color: #70ffde;    
@@ -96,52 +45,11 @@ canvas {
 .action:hover {
 
     background-color: #70ffde;    
-    border: 3px solid #00f7ff;
+    border: 1px solid #00f7ff;
 
 }
 
-
-#brushColor {
-  width: 60px; /* Largura do seletor de cores */
-  height: 60px; /* Altura do seletor de cores */
-  border: none; /* Removendo a borda padrão do seletor */
-  border-radius: 40%; /* Deixando-o redondo */
-  cursor: pointer; /* Alterando o cursor ao passar por cima */
-  -webkit-appearance: none; /* Removendo o estilo padrão do WebKit */
-}
-
-#brushColor::-webkit-color-swatch-wrapper {
-  padding: 0; /* Removendo o preenchimento */
-}
-
-#brushColor::-webkit-color-swatch {
-  border: none; /* Removendo a borda do seletor */
-  border-radius: 40%; /* Deixando-o redondo */
-}
-
-.colorSquare {
-
-    width: 20px; /* Largura do seletor de cores */
-    height: 20px; /* Altura do seletor de cores */
-    border: none; /* Removendo a borda padrão do seletor */
-    border-radius: 40%; /* Deixando-o redondo */
-    cursor: pointer; /* Alterando o cursor ao passar por cima */
-
-}
-
-.colorRow {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-
-    margin: 5px 0px;;
-}
-
-
-.button-svg {
-    width: 30px;
-    height: 30px;
-    margin-top: 3px;
-    pointer-events: none;
+#colorbench svg:hover {
+    cursor: pointer;
 }
 
